@@ -95,9 +95,9 @@ def run_model_ctypes(S, C, config):
         n_beats = np.ceil(t_run / stim_period).astype(int)
         if n_beats % 2 == 0:
             n_beats += 1
-        #print(stim_period, n_beats, stim_period * n_beats)
     else:
-        print('Invalid config: check n_beats & t_run entries.', fflush=True)
+        print('Invalid config: check n_beats & t_run entries.',
+              file=sys.stderr, fflush=True)
         exit()
 
     tol = config.get('tol', 1e-6)
@@ -251,9 +251,11 @@ def save_epoch(population, kw_output):
         pickle.dump(population, file_backup)
     timer.end('output_backup')
 
-    print(np.array2string(dump_current[0, :],
-                          formatter={'float_kind': lambda x: "%.3f" % x},
-                          max_line_width=1000)[1:-1], flush=True)
+    with open(config['runtime']['output']['log_filename'], "a") as file_log:
+        s = np.array2string(dump_current[0, :],
+                            formatter={'float_kind': lambda x: "%.3f" % x},
+                            max_line_width=1000)[1:-1] + "\n"
+        file_log.write(s)
 
 
 @njit
@@ -430,21 +432,24 @@ config['runtime']["output_folder_name"] = output_folder_name
 comm.Barrier()
 
 config['runtime']['output'] = dict(output_folder_name_phenotype = os.path.join(output_folder_name, "phenotype"),
-                                   dump_filename = os.path.join(output_folder_name, "dump.bin"),
-                                   dump_last_filename = os.path.join(output_folder_name, "dump_last.npy"),
-                                   backup_filename = os.path.join(output_folder_name, "backup.pickle"),
-                                   output_folder_name_mpi = os.path.join(output_folder_name, "mpi"),
-                                   config_backup_filename = os.path.join(output_folder_name, "config_backup.pickle"))
+                                   dump_filename                = os.path.join(output_folder_name, "dump.bin"),
+                                   dump_last_filename           = os.path.join(output_folder_name, "dump_last.npy"),
+                                   backup_filename              = os.path.join(output_folder_name, "backup.pickle"),
+                                   output_folder_name_mpi       = os.path.join(output_folder_name, "mpi"),
+                                   config_backup_filename       = os.path.join(output_folder_name, "config_backup.pickle"),
+                                   log_filename                 = os.path.join(output_folder_name, "runtime.log"))
 
 if comm_rank == 0:
-    for folder in config['runtime']['output']['output_folder_name_phenotype'],\
-                  config['runtime']['output']['output_folder_name_mpi']:
+    # for folder in config['runtime']['output']['output_folder_name_phenotype'],\
+    #               config['runtime']['output']['output_folder_name_mpi']:
+    for folder in config['runtime']['output']['output_folder_name_phenotype'],:
         os.makedirs(folder, exist_ok=True)
     with open(config['runtime']['output']['dump_filename'], "wb") as file_dump:  # create or clear and close
         pass
     with open(config['runtime']['output']['config_backup_filename'], "wb") as file_config_backup:
         pickle.dump(config, file_config_backup)
-    print("# SIZE =", comm_size, flush=True)
+    with open(config['runtime']['output']['log_filename'], "w") as file_log:
+        file_log.write(f"# SIZE = {comm_size}\n")
 
 time_start = time.time()
 
@@ -487,7 +492,8 @@ if comm_rank == 0:
             backup = pickle.load(f)
         population = init_population_from_backup(backup, config)
         config['runtime']['initial_population_filename'] = initial_population_filename
-        print(f"population was loaded from {initial_population_filename}", flush=True)
+        with open(config['runtime']['output']['log_filename'], "a") as file_log:
+            file_log.write(f"population was loaded from {initial_population_filename}\n")
     else:
         population = init_population(config)
     #  population[0]['genes'] = np.ones_like(population[0]['genes'])
@@ -537,7 +543,8 @@ for epoch in range(config['n_generations']):
             # exit()
 
         if FLAG_INVALID:
-            print('#', msg_invalid, end='', flush=True)
+            with open(config['runtime']['output']['log_filename'], "a") as file_log:
+                file_log.write(f"# {msg_invalid}")
             # organism['phenotype'] = [np.empty(length) for length in phenotype_lens]  # needed for gather
             organism['fitness'] = np.NINF
             del organism['phenotype']
@@ -653,8 +660,8 @@ for epoch in range(config['n_generations']):
 
     if len(population) <= 3:
         if comm_rank == 0:
-            print(f"# Not enough organisms for genetic operations left: {len(population)}\nexit", flush=True)
-        comm.Barrier()
+            with open(config['runtime']['output']['log_filename'], "a") as file_log:
+                file_log.write(f"# Not enough organisms for genetic operations left: {len(population)}\nexit\n")
         exit()
 
     population.sort(key=lambda organism: organism['fitness'], reverse=True)
@@ -663,7 +670,8 @@ for epoch in range(config['n_generations']):
         if comm_rank == 0:
             n_invalids = len(population) - index_first_invalid
             percentage_invalid = (n_invalids) / len(population) * 100
-            print(f"# {n_invalids} ({percentage_invalid:.2f} %) invalids were deleted", flush=True)
+            with open(config['runtime']['output']['log_filename'], "a") as file_log:
+                file_log.write(f"# {n_invalids} ({percentage_invalid:.2f} %) invalids were deleted\n")
         population = population[:index_first_invalid]
     elites_all = population[:config['n_elites']]  # len may be less than config['n_elites'] due to invalids
     elites_batch = elites_all[comm_rank::comm_size]
@@ -703,20 +711,21 @@ for epoch in range(config['n_generations']):
     ##     ## ######## ##         #######  ##     ##    ##
 
     if comm_rank == epoch % comm_size:
-        print(f"# EPOCH {epoch}:")
-        print(timer.report(sort=True), flush=True)
+        with open(config['runtime']['output']['log_filename'], "a") as file_log:
+            file_log.write(f"# EPOCH {epoch}:\n")
+            file_log.write(timer.report(sort=True) + "\n")
 
-    filename_mpi_report = os.path.join(config['runtime']['output']['output_folder_name_mpi'],
-                                       f"report_{comm_rank:04d}.csv")
-    mode = 'a' if os.path.isfile(filename_mpi_report) and epoch != 0 else 'w'
-    with open(filename_mpi_report, mode) as f:
-        if mode == 'w':
-            header = ','.join(timer.times.keys())
-            f.write(header + '\n')
-        f.write(','.join([str(v) for v in timer.times.values()]) + '\n')
+    # filename_mpi_report = os.path.join(config['runtime']['output']['output_folder_name_mpi'],
+    #                                    f"report_{comm_rank:04d}.csv")
+    # mode = 'a' if os.path.isfile(filename_mpi_report) and epoch != 0 else 'w'
+    # with open(filename_mpi_report, mode) as f:
+    #     if mode == 'w':
+    #         header = ','.join(timer.times.keys())
+    #         f.write(header + '\n')
+    #     f.write(','.join([str(v) for v in timer.times.values()]) + '\n')
 
 
 if comm_rank == 0:
     time_end = time.time()
-    print("# TIME =", time_end - time_start, flush=True)
-    file_dump.close()
+    with open(config['runtime']['output']['log_filename'], "a") as file_log:
+        file_log.write(f"# TIME = {time_end - time_start}")
