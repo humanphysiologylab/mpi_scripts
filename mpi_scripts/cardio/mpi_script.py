@@ -2,306 +2,30 @@ from mpi4py import MPI
 import os
 import json
 import time
-from collections import OrderedDict
 import pickle
 from datetime import datetime
-import copy
 
 import numpy as np
 import pandas as pd
-# from scipy.integrate import solve_ivp
-
-import sklearn.metrics
 
 import ctypes
-from numba import njit
 
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from src.helpers import get_value_by_key, update_array_from_kwargs,\
-    calculate_RMSE_balanced, calculate_RMSE, \
-    batches_from_list, value_from_bounds, argmax_list_of_dicts,\
-    calculate_composite_RMSE_V_CaT, Timer, find_index_first, flatten_iterable, strip_comments
+from src.helpers import batches_from_list, argmax_list_of_dicts, \
+                        Timer, find_index_first, strip_comments
+
 from src.algorythm.ga import do_step
 
+from utils import create_genes_dict_from_config, create_constants_dict_from_config, \
+                  init_population, init_population_from_backup, \
+                  run_model_ctypes, \
+                  update_phenotype_state, update_fitness, \
+                  generate_bounds_gammas_mask_multipliers, \
+                  save_epoch, plot_phenotypes, \
+                  transform_genes_bounds, transform_genes_bounds_back
 
-def create_genes_dict_from_config(config):
-    genes_dict = {ec_name:
-                      {p_name: dict(bounds=p['bounds'],
-                                    gamma=p['gamma'],
-                                    is_multiplier=p.get("is_multiplier", False))
-                       for p_name, p in ec['params'].items() if isinstance(p, dict)}
-                  for ec_name, ec in config['experimental_conditions'].items()}
-
-    return genes_dict
-
-
-def create_constants_dict_from_config(config):
-    constants_dict = {
-        ec_name: {p_name: value for p_name, value in ec['params'].items() if isinstance(value, (int, float))}
-        for ec_name, ec in config['experimental_conditions'].items()}
-
-    return constants_dict
-
-
-def generate_organism(genes_dict, genes_m_index, state):
-
-    genes = [value_from_bounds(gene_params['bounds'], log_scale=gene_params['is_multiplier'])
-             if gene_name not in state.index else state[exp_cond_name][gene_name]
-             for exp_cond_name, exp_cond in genes_dict.items() for gene_name, gene_params in exp_cond.items()]
-
-    genes = pd.Series(data=genes, index=genes_m_index)
-
-    organism = dict(genes=genes,
-                    state=state.copy())
-    return organism
-
-
-def init_population(config):
-
-    population = [generate_organism(config['runtime']['genes_dict'],
-                                    config['runtime']['m_index'],
-                                    config['runtime']['states_initial'])
-                  for _ in range(config['runtime']['n_organisms'])]
-    return population
-
-
-def init_population_from_backup(backup, config):
-
-    genes_dict = config['runtime']['genes_dict']
-
-    assert (len(backup) == config['runtime']['n_organisms'])
-    assert (len(backup[0]['genes']) == sum(map(len, genes_dict.values())))
-    assert (backup[0]['state'].shape == config['runtime']['states_initial'].shape)
-
-    population = [dict(genes=pd.Series(data=organism['genes'], index=config['runtime']['m_index']),
-                       state=pd.DataFrame(data=organism['state'], columns=config['runtime']['states_initial'].columns,
-                                          index=config['runtime']['states_initial'].index))
-                  for organism in backup]
-
-    return population
-
-
-def run_model_ctypes(S, C, config):
-
-    stim_period = C[config['stim_period_legend_name']]
-    t_sampling = config['t_sampling']
-
-    if 'n_beats' in config and 't_run' not in config:
-        n_beats = config['n_beats']
-    elif 'n_beats' not in config and 't_run' in config:
-        t_run = config['t_run']
-        n_beats = np.ceil(t_run / stim_period).astype(int)
-        if n_beats % 2 == 0:
-            n_beats += 1
-    else:
-        print('Invalid config: check n_beats & t_run entries.',
-              file=sys.stderr, fflush=True)
-        exit()
-
-    tol = config.get('tol', 1e-6)
-
-    n_samples_per_stim = int(stim_period / t_sampling)
-    output = np.empty((n_samples_per_stim * n_beats + 1, len(S)))
-
-    status = run_model_ctypes.model.run(S.values.copy(), C.values.copy(),
-                                        n_beats, t_sampling, tol, output)
-
-    output = output[-n_samples_per_stim - 1:].T  # last beat
-
-    return status, output
-
-
-def update_phenotype_state(organism, config):
-
-    organism['phenotype'] = dict()
-
-    legend = config['runtime']['legend']
-    genes_dict = config['runtime']['genes_dict']
-    constants_dict = config['runtime']['constants_dict']
-
-    for exp_cond_name in config['experimental_conditions']:
-
-        if exp_cond_name == 'common':
-            continue
-
-        genes_current = organism['genes'][['common',
-                                           exp_cond_name]]
-        constants_dict_current = {**constants_dict['common'],
-                                  **constants_dict[exp_cond_name]}
-
-        C = legend['constants'].copy()
-        S = organism['state'][exp_cond_name].copy()
-
-        for i in range(len(genes_current)):
-            g_name = genes_current.index.get_level_values('g_name').to_list()[i]
-
-            if g_name in legend['constants'].index:
-                for ecn in ['common', exp_cond_name]:
-                    if g_name in genes_dict[ecn]:
-                        if genes_dict[ecn][g_name]['is_multiplier']:
-                            C[g_name] *= genes_current[ecn, g_name]
-                        else:
-                            C[g_name] = genes_current[ecn, g_name]
-
-            if g_name in legend['states'].index:
-                for ecn in ['common', exp_cond_name]:
-                    if g_name in genes_dict[ecn]:
-                        if genes_dict[ecn][g_name]['is_multiplier']:
-                            S[g_name] *= genes_current[ecn, g_name]
-                        else:
-                            S[g_name] = genes_current[ecn, g_name]
-
-        for c_name, c in constants_dict_current.items():
-            if c_name in legend['constants'].index:
-                C[c_name] = c
-            if c_name in legend['states'].index:
-                S[c_name] = c
-
-        status, res = run_model_ctypes(S, C, config)
-        if (status != 2) or np.any(np.isnan(res)):
-            return 1
-
-        organism['phenotype'][exp_cond_name] = pd.DataFrame(res.T, columns=legend['states'].index)
-        organism['state'][exp_cond_name] = organism['phenotype'][exp_cond_name].iloc[-1]
-
-        for i in range(len(genes_current)):
-            g_name = genes_current.index.get_level_values('g_name').to_list()[i]
-
-            if g_name in legend['states'].index:
-                for ecn in ['common', exp_cond_name]:
-                    if g_name in genes_dict[ecn]:
-                        if genes_dict[ecn][g_name]['is_multiplier']:
-                            organism['genes'][ecn, g_name] = organism['state'][exp_cond_name][g_name]\
-                                                             / legend['states'][g_name]
-                        else:
-                            organism['genes'][ecn, g_name] = organism['state'][exp_cond_name][g_name]
-
-    return 0
-
-
-def update_fitness(organism, config):
-    loss = 0
-    for exp_cond_name, exp_cond in config['experimental_conditions'].items():
-        if exp_cond_name == 'common':
-            continue
-
-        # phenotype_control = exp_cond['phenotype']
-        # phenotype_model = organism['phenotype'][exp_cond_name]
-        # V = phenotype_model['V'].values[:len(phenotype_control)]
-        #
-        # volumes = legend['constants'][['Vss'] + [f'Vnonjunct{i}' for i in range(1, 4 + 1)]]
-        # concentrations = phenotype_model[['Cass'] + [f'Cai{i}' for i in range(1, 4 + 1)]]
-        # Cai_mean = (concentrations.values * volumes.values).sum(axis=1) / sum(volumes)
-        # Cai_mean = Cai_mean[:len(phenotype_control)]
-        #
-        # phenotype_model = np.vstack([V, Cai_mean]).T
-
-        phenotype_control = exp_cond['phenotype']['V']
-        phenotype_model = organism['phenotype'][exp_cond_name]
-        phenotype_model = phenotype_model['V'][:len(phenotype_control)]
-
-        if config['loss'] == 'RMSE':
-            loss += sklearn.metrics.mean_squared_error(phenotype_control, phenotype_model, squared=False)
-        elif config['loss'] == 'MSE':
-            loss += sklearn.metrics.mean_squared_error(phenotype_control, phenotype_model, squared=True)
-        else:
-            # loss += calculate_RMSE(phenotype_control, phenotype_model)
-            loss += calculate_RMSE_balanced(phenotype_control, phenotype_model)
-            # loss += calculate_composite_RMSE_V_CaT(phenotype_control, phenotype_model)
-            # loss += calculate_RMSE(V, phenotype_control[:, 0])
-
-    organism['fitness'] = -loss
-
-
-def generate_bounds_gammas_mask_multipliers(genes_dict):
-
-    bounds, gammas, mask_multipliers = map(np.array, [[x[item] for y in genes_dict.values() for x in y.values()]
-                                                      for item in ['bounds', 'gamma', 'is_multiplier']])
-    return bounds, gammas, mask_multipliers
-
-
-def save_epoch(population, kw_output):
-
-    dump_filename = kw_output['dump_filename']
-    dump_last_filename = kw_output['dump_last_filename']
-    backup_filename = kw_output['backup_filename']
-
-    timer.start('output_sort')
-    population = sorted(population, key=lambda organism: organism['fitness'], reverse=True)
-    timer.end('output_sort')
-
-    timer.start('output_prepare')
-    genes = np.array([organism['genes'] for organism in population])
-    fitness = np.array([organism['fitness'] for organism in population])
-
-    dump_current = np.hstack([genes, fitness[:, None]])
-    timer.end('output_prepare')
-
-    timer.start('output_dump')
-    with open(dump_filename, 'ba+') as file_dump:
-        dump_current.astype(np.half).tofile(file_dump)
-    timer.end('output_dump')
-
-    np.save(dump_last_filename, dump_current)
-
-    timer.start('output_backup')
-    with open(backup_filename, "wb") as file_backup:
-        pickle.dump(population, file_backup)
-    timer.end('output_backup')
-
-    with open(config['runtime']['output']['log_filename'], "a") as file_log:
-        s = np.array2string(dump_current[0, :],
-                            formatter={'float_kind': lambda x: "%.3f" % x},
-                            max_line_width=1000)[1:-1] + "\n"
-        file_log.write(s)
-
-
-@njit
-def transform_genes_bounds(genes, bounds, gammas, mask_multipliers):
-    assert (len(genes) == len(bounds) == len(gammas) == len(mask_multipliers))
-
-    genes_transformed = np.zeros_like(genes)
-    bounds_transformed = np.zeros_like(bounds)
-
-    scaler_dimensional = 1 / np.sqrt(len(genes))
-    for i in range(len(genes)):
-        lb, ub = bounds[i]
-        gene = genes[i]
-        if mask_multipliers[i]:  # log10 scale
-            bounds_transformed[i, 1] = np.log10(ub / lb) * 1 / (gammas[i] / scaler_dimensional)
-            genes_transformed[i] = np.log10(gene)
-            lb_temp = np.log10(lb)
-            ub_temp = np.log10(ub)
-        else:  # linear scale
-            genes_transformed[i] = gene
-            bounds_transformed[i, 1] = (ub - lb) * 1 / (gammas[i] / scaler_dimensional)
-            lb_temp = lb
-            ub_temp = ub
-        genes_transformed[i] = (genes_transformed[i] - lb_temp) / (ub_temp - lb_temp) * bounds_transformed[i, 1]
-
-    return genes_transformed, bounds_transformed
-
-
-@njit
-def transform_genes_bounds_back(genes_transformed, bounds_transformed, bounds_back, mask_multipliers):
-    assert (len(genes_transformed) == len(bounds_transformed) == len(mask_multipliers))
-
-    genes_back = np.zeros_like(genes_transformed)
-
-    for i in range(len(genes_transformed)):  #log10 scale
-        lb_back, ub_back = bounds_back[i]
-        lb_tran, ub_tran = bounds_transformed[i]
-        gene = genes_transformed[i]
-        if mask_multipliers[i]:
-            genes_back[i] = np.log10(lb_back) + (gene - lb_tran) / (ub_tran - lb_tran) * (
-                        np.log10(ub_back) - np.log10(lb_back))
-            genes_back[i] = np.power(10, genes_back[i])
-        else:# linear scale
-            genes_back[i] = lb_back + (gene - lb_tran) / (ub_tran - lb_tran) * (ub_back - lb_back)
-
-    return genes_back
 
 #### ##    ## #### ########
  ##  ###   ##  ##     ##
@@ -349,24 +73,9 @@ config['runtime']['m_index'] = m_index
  ######     ##       ##    ##        ########  ######
 
 filename_so = os.path.join(config_path, config["filename_so"])
-# print(filename_so)
 filename_so_abs = os.path.abspath(filename_so)
 
 model = ctypes.CDLL(filename_so_abs)
-
-# model.initialize_states_default.argtypes = [
-#     np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
-# ]
-#
-# model.initialize_states_default.restype = ctypes.c_void_p
-#
-#
-# model.initialize_constants_default.argtypes = [
-#     np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
-# ]
-#
-# model.initialize_constants_default.restype = ctypes.c_void_p
-
 
 model.run.argtypes = [
     np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
@@ -404,7 +113,6 @@ for exp_cond_name, exp_cond in config['experimental_conditions'].items():
         continue
 
     filename_phenotype = os.path.normpath(os.path.join(config_path, exp_cond['filename_phenotype']))
-    # exp_cond['phenotype'] = np.loadtxt(filename_phenotype)
     exp_cond['phenotype'] = pd.read_csv(filename_phenotype)
     exp_cond['filename_phenotype'] = filename_phenotype
 
@@ -437,7 +145,10 @@ config['runtime']['output'] = dict(output_folder_name_phenotype = os.path.join(o
                                    backup_filename              = os.path.join(output_folder_name, "backup.pickle"),
                                    output_folder_name_mpi       = os.path.join(output_folder_name, "mpi"),
                                    config_backup_filename       = os.path.join(output_folder_name, "config_backup.pickle"),
-                                   log_filename                 = os.path.join(output_folder_name, "runtime.log"))
+                                   log_filename                 = os.path.join(output_folder_name, "runtime.log"),
+                                   organism_best_filename       = os.path.join(output_folder_name, "organism_best.pickle"),
+                                   genes_best_filename          = os.path.join(output_folder_name, "genes_best.csv"),
+                                   phenotypes_plot_filename     = os.path.join(output_folder_name, "phenotypes_plot_filename.png"))
 
 if comm_rank == 0:
     # for folder in config['runtime']['output']['output_folder_name_phenotype'],\
@@ -617,6 +328,15 @@ for epoch in range(config['n_generations']):
     if comm_rank == comm_rank_best:
         # print(f"rank {comm_rank_best}: index_best = {index_best}, {index_best_batch}", flush=True)
         organism_best = batch[index_best_batch]
+
+        with open(config['runtime']['output']['organism_best_filename'], 'bw') as f:
+            pickle.dump(organism_best, f)
+
+        organism_best['genes'].to_csv(config['runtime']['output']['genes_best_filename'])
+
+        plot_phenotypes(organism_best, config,
+                        filename_save=config['runtime']['output']['phenotypes_plot_filename'])
+
         for exp_cond_name in config['experimental_conditions']:
             if exp_cond_name == 'common':
                 continue
@@ -636,14 +356,14 @@ for epoch in range(config['n_generations']):
 
     timer.end('save_phenotype')
 
-    timer.start('output_sort')
-    timer.end('output_sort')
-    timer.start('output_prepare')
-    timer.end('output_prepare')
-    timer.start('output_dump')
-    timer.end('output_dump')
-    timer.start('output_backup')
-    timer.end('output_backup')
+    # timer.start('output_sort')
+    # timer.end('output_sort')
+    # timer.start('output_prepare')
+    # timer.end('output_prepare')
+    # timer.start('output_dump')
+    # timer.end('output_dump')
+    # timer.start('output_backup')
+    # timer.end('output_backup')
 
     if comm_rank == epoch % comm_size:
         save_epoch(population, config['runtime']['output'])
