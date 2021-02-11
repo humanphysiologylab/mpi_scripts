@@ -1,0 +1,172 @@
+{
+    "n_organisms": 64,
+    "n_elites": 2,
+    "n_generations": 10,
+
+    "output_folder_name": "../../results/kernik_clancy/syn",
+
+    "crossover_rate": 1.0,
+    "mutation_rate": 1.0,
+    "gamma": 1.0,
+    "loss": "RMSE",
+
+    "filename_so": "../../src/model_ctypes/_kernik_clancy/model.so",
+    "filename_legend_states": "../../src/model_ctypes/_kernik_clancy/legend_states.csv",
+    "filename_legend_constants": "../../src/model_ctypes/_kernik_clancy/legend_constants.csv",
+
+    "t_run": 9,
+    "t_sampling": 1,
+    "tol": 1e-4,
+    "stim_period_legend_name": "stim_period",
+
+
+    "experimental_conditions": {
+        "common": {
+            "params": {
+
+                "stim_flag": 2,
+                "i_stim_Amplitude": 30,
+
+                "g_K1_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_Kr_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_Ks_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_to_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_CaL_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_CaT_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_Na_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_f_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "kNaCa_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "VmaxUp_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "ks_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "V_leak_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "PNaK_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_b_Na_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_b_Ca_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_PCa_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                }
+            }
+        },
+
+
+        "2000": {
+            "params": {
+                "stim_period": 2000,
+                "Nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "Ki": {
+                    "bounds": [80, 120],
+                    "gamma": 0.015
+                },
+                "Ca_SR": {
+                    "bounds": [0.01, 10],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/kernik_clancy/IK1_x2_biphasic/phenotypes/phenotype_2000.csv",
+            "filename_state": "../../data/kernik_clancy/IK1_x2_biphasic/states/state_1000.txt"
+        },
+        "1000": {
+            "params": {
+                "stim_period": 1000,
+                "Nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "Ki": {
+                    "bounds": [80, 120],
+                    "gamma": 0.015
+                },
+                "Ca_SR": {
+                    "bounds": [0.01, 10],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/kernik_clancy/IK1_x2_biphasic/phenotypes/phenotype_1000.csv",
+            "filename_state": "../../data/kernik_clancy/IK1_x2_biphasic/states/state_1000.txt"
+        },
+        "500": {
+            "params": {
+                "stim_period": 500,
+                "Nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "Ki": {
+                    "bounds": [80, 120],
+                    "gamma": 0.015
+                },
+                "Ca_SR": {
+                    "bounds": [0.01, 10],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/kernik_clancy/IK1_x2_biphasic/phenotypes/phenotype_500.csv",
+            "filename_state": "../../data/kernik_clancy/IK1_x2_biphasic/states/state_1000.txt"
+        }
+    }
+}

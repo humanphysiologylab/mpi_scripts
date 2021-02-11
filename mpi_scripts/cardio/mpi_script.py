@@ -197,7 +197,7 @@ recvbuf_fitness = np.empty([comm_size, n_orgsnisms_per_process * 1])
 #  Main cycle
 if comm_rank == 0:
     initial_population_filename = config.get('initial_population_filename', None)
-    if initial_population_filename:
+    if initial_population_filename is not None:
         initial_population_filename = os.path.normpath(os.path.join(config_path, initial_population_filename))
         with open(initial_population_filename, 'rb') as f:
             backup = pickle.load(f)
@@ -334,8 +334,8 @@ for epoch in range(config['n_generations']):
 
         organism_best['genes'].to_csv(config['runtime']['output']['genes_best_filename'])
 
-        plot_phenotypes(organism_best, config,
-                        filename_save=config['runtime']['output']['phenotypes_plot_filename'])
+        # plot_phenotypes(organism_best, config,
+        #                 filename_save=config['runtime']['output']['phenotypes_plot_filename'])
 
         for exp_cond_name in config['experimental_conditions']:
             if exp_cond_name == 'common':
