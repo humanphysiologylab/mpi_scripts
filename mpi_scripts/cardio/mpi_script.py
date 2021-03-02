@@ -254,8 +254,8 @@ for epoch in range(config['n_generations']):
             # exit()
 
         if FLAG_INVALID:
-            with open(config['runtime']['output']['log_filename'], "a") as file_log:
-                file_log.write(f"# {msg_invalid}")
+            # with open(config['runtime']['output']['log_filename'], "a") as file_log:
+            #     file_log.write(f"# {msg_invalid}")
             # organism['phenotype'] = [np.empty(length) for length in phenotype_lens]  # needed for gather
             organism['fitness'] = np.NINF
             del organism['phenotype']
@@ -333,7 +333,7 @@ for epoch in range(config['n_generations']):
             pickle.dump(organism_best, f)
 
         organism_best['genes'].to_csv(config['runtime']['output']['genes_best_filename'])
-
+        #
         # plot_phenotypes(organism_best, config,
         #                 filename_save=config['runtime']['output']['phenotypes_plot_filename'])
 
