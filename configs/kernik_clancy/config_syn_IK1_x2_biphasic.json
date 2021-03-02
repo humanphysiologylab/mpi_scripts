@@ -1,6 +1,6 @@
 {
-    "n_organisms": 64,
-    "n_elites": 2,
+    "n_organisms": 128,
+    "n_elites": 16,
     "n_generations": 10,
 
     "output_folder_name": "../../results/kernik_clancy/syn",
