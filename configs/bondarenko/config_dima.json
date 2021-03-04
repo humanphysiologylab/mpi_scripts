@@ -1,0 +1,128 @@
+{
+    "n_organisms": 8,
+    "n_elites": 2,
+    "n_generations": 5,
+
+    "output_folder_name": "../../results/bondarenko/syn",
+
+    "crossover_rate": 1.0,
+    "mutation_rate": 1.0,
+    "gamma": 1.0,
+    "loss": "RMSE",
+
+    "use_scipy": true,
+    "filename_so": "../../src/model_ctypes/_bondarenko/bondarenko.so",
+    "filename_legend_states": "../../src/model_ctypes/_bondarenko/legend_states.csv",
+    "filename_legend_constants": "../../src/model_ctypes/_bondarenko/legend_constants.csv",
+
+    "t_run": 3,
+    "t_sampling": 1,
+
+    "stim_period_legend_name": "CL",
+
+
+    "experimental_conditions": {
+        "common": {
+            "params": {
+
+                "gna": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "knaca": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "inakmax": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "ipcamax": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "gcab": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "gnab": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "gks": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "gkto": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "gkr": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "gclca": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "CaLF": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "CaTF": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "v1": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "v2": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "v3": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "gcakF": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                }
+            }
+        },
+
+
+
+        "1000": {
+            "params": {
+                "stim_period": 1000
+            },
+            "filename_phenotype": "../../data/bondarenko/syn/phenotypes/phenotype_1000.csv",
+            "filename_state": "../../data/bondarenko/syn/states/state_500.txt"
+        },
+        "500": {
+            "params": {
+                "stim_period": 500
+            },
+            "filename_phenotype": "../../data/bondarenko/syn/phenotypes/phenotype_500.csv",
+            "filename_state": "../../data/bondarenko/syn/states/state_1000.txt"
+        }
+    }
+}

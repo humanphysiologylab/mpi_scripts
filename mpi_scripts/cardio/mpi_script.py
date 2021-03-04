@@ -20,7 +20,7 @@ from src.algorythm.ga import do_step
 
 from utils import create_genes_dict_from_config, create_constants_dict_from_config, \
                   init_population, init_population_from_backup, \
-                  run_model_ctypes, \
+                  run_model_ctypes, run_model_scipy, \
                   update_phenotype_state, update_fitness, \
                   generate_bounds_gammas_mask_multipliers, \
                   save_epoch, plot_phenotypes, \
@@ -77,17 +77,31 @@ filename_so_abs = os.path.abspath(filename_so)
 
 model = ctypes.CDLL(filename_so_abs)
 
-model.run.argtypes = [
-    np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
-    np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
-    ctypes.c_int,
-    ctypes.c_double,
-    ctypes.c_double,
-    np.ctypeslib.ndpointer(dtype=np.float64, ndim=2, flags='C_CONTIGUOUS')
-]
+if config['use_scipy']:
 
-model.run.restype = ctypes.c_int
-run_model_ctypes.model = model
+    model.fun.argtypes = [  # TODO: generalize
+        ctypes.c_double,
+        np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
+        np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
+        np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
+    ]
+
+    model.fun.restype = ctypes.c_void_p
+    run_model_scipy.model = model
+
+else:
+
+    model.run.argtypes = [
+        np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
+        np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
+        ctypes.c_int,
+        ctypes.c_double,
+        ctypes.c_double,
+        np.ctypeslib.ndpointer(dtype=np.float64, ndim=2, flags='C_CONTIGUOUS')
+    ]
+
+    model.run.restype = ctypes.c_int
+    run_model_ctypes.model = model
 
 ###############################################################################
 

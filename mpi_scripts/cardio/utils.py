@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 
 from numba import njit
 
+from scipy.integrate import solve_ivp
+
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
@@ -102,6 +104,49 @@ def run_model_ctypes(S, C, config):
     return status, output
 
 
+def run_model_scipy(S, C, config):
+
+        stim_period = C[config['stim_period_legend_name']]
+        t_sampling = config['t_sampling']
+
+        if 'n_beats' in config and 't_run' not in config:
+            n_beats = config['n_beats']
+        elif 'n_beats' not in config and 't_run' in config:
+            t_run = config['t_run']
+            n_beats = np.ceil(t_run / stim_period).astype(int)
+            if n_beats % 2 == 0:
+                n_beats += 1
+        else:
+            print('Invalid config: check n_beats & t_run entries.',
+                  file=sys.stderr, fflush=True)
+            exit()
+
+        #tol = config.get('tol', 1e-6)
+
+        n_samples_per_stim = int(stim_period / t_sampling)
+
+        t_space = np.linspace(0, stim_period * n_beats, n_samples_per_stim * n_beats + 1, endpoint=True)
+        t_span = 0, t_space[-1]
+
+        def fun(t, y, params): # TODO: rewrite
+            ydot = np.zeros_like(y)
+            run_model_scipy.model.fun(t, y, ydot, params)
+            return ydot
+
+        sol = solve_ivp(fun, y0=S,
+                        t_span=t_span, t_eval=t_space,
+                        args=(C.values.copy(),),
+                        method='LSODA',# rtol=1e-9,
+                        max_step=1. * t_sampling,
+                )
+
+        #output = output[-n_samples_per_stim - 1:].T  # last beat
+        output = sol.y[:, -n_samples_per_stim - 1:]
+        status = sol.status
+
+        return status, output
+
+
 def update_phenotype_state(organism, config):
 
     organism['phenotype'] = dict()
@@ -115,8 +160,12 @@ def update_phenotype_state(organism, config):
         if exp_cond_name == 'common':
             continue
 
-        genes_current = organism['genes'][['common',
-                                           exp_cond_name]]
+        if exp_cond_name in organism['genes']:
+            genes_current = organism['genes'][['common',
+                                               exp_cond_name]]
+        else:
+            genes_current = organism['genes'][['common']]
+
         constants_dict_current = {**constants_dict['common'],
                                   **constants_dict[exp_cond_name]}
 
@@ -148,9 +197,14 @@ def update_phenotype_state(organism, config):
             if c_name in legend['states'].index:
                 S[c_name] = c
 
-        status, res = run_model_ctypes(S, C, config)
-        if (status != 2) or np.any(np.isnan(res)):
-            return 1
+        if config['use_scipy']:
+            status, res = run_model_scipy(S, C, config)
+            if (status != 0) or np.any(np.isnan(res)):
+                return 1
+        else:
+            status, res = run_model_ctypes(S, C, config)
+            if (status != 2) or np.any(np.isnan(res)):
+                return 1
 
         organism['phenotype'][exp_cond_name] = pd.DataFrame(res.T, columns=legend['states'].index)
         organism['state'][exp_cond_name] = organism['phenotype'][exp_cond_name].iloc[-1]
