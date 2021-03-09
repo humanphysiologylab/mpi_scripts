@@ -77,7 +77,7 @@ filename_so_abs = os.path.abspath(filename_so)
 
 model = ctypes.CDLL(filename_so_abs)
 
-if config['use_scipy']:
+if config.get('use_scipy', False):
 
     model.fun.argtypes = [  # TODO: generalize
         ctypes.c_double,

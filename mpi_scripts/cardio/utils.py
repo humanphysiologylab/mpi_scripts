@@ -197,7 +197,7 @@ def update_phenotype_state(organism, config):
             if c_name in legend['states'].index:
                 S[c_name] = c
 
-        if config['use_scipy']:
+        if config.get('use_scipy', False):
             status, res = run_model_scipy(S, C, config)
             if (status != 0) or np.any(np.isnan(res)):
                 return 1
