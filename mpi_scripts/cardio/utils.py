@@ -13,7 +13,7 @@ from scipy.integrate import solve_ivp
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from src.helpers import MSE, RMSE, calculate_mean_abs_noise, calculate_RMSE_weightened, \
+from src.helpers import RMSE, calculate_mean_abs_noise, calculate_RMSE_weightened, \
                         calculate_RMSE_balanced, calculate_composite_RMSE_V_CaT, autoscaling, \
                         value_from_bounds
 
@@ -226,45 +226,30 @@ def update_phenotype_state(organism, config):
 
 def update_fitness(organism, config):
     loss = 0
+
+    columns_control = config.get("columns_control", ["V"])
+    columns_model = config.get("columns_control", ["V"])
+
     for exp_cond_name, exp_cond in config['experimental_conditions'].items():
+
         if exp_cond_name == 'common':
             continue
 
-        if 'koivumaki' in config['filename_so']:
+        phenotype_control = exp_cond['phenotype'][columns_control]
+        phenotype_model   = organism['phenotype'][exp_cond_name][columns_model]
 
-            phenotype_control = exp_cond['phenotype'].values.copy()
-            #phenotype_control[:, 1] *= 740 / 864  # vanessa Kd
-
-            phenotype_model = organism['phenotype'][exp_cond_name]
-            V = phenotype_model['V'].values[:len(phenotype_control)]
-
-            legend = config['runtime']['legend']
-            volumes = legend['constants'][['Vss'] + [f'Vnonjunct{i}' for i in range(1, 4 + 1)]]
-
-            # concentrations = phenotype_model[['fluo_ss'] + [f'fluo_{i}' for i in range(1, 4 + 1)]]
-            concentrations = phenotype_model[['Cass'] + [f'Cai{i}' for i in range(1, 4 + 1)]]
-
-            Cai_mean = (concentrations.values * volumes.values).sum(axis=1) / sum(volumes)
-            Cai_mean = Cai_mean[:len(phenotype_control)]
-
-            phenotype_model = np.vstack([V, Cai_mean]).T
-
-        else:
-
-            phenotype_control = exp_cond['phenotype']['V']
-            phenotype_model = organism['phenotype'][exp_cond_name]
-            phenotype_model = phenotype_model['V'][:len(phenotype_control)]
+        phenotype_model   = phenotype_model[:len(phenotype_control)]
 
         if config['loss'] == 'RMSE':
             loss += RMSE(phenotype_control, phenotype_model)
-
-        elif config['loss'] == 'MSE':
-            loss += MSE(phenotype_control, phenotype_model)
 
         elif config['loss'] == 'RMSE_balanced':
             loss += calculate_RMSE_balanced(phenotype_control, phenotype_model)
 
         elif config['loss'] == 'RMSE_weightened':
+
+            phenotype_model = phenotype_model.to_numpy()
+            phenotype_control = phenotype_control.to_numpy()
 
             phenotype_model   = (phenotype_model   - phenotype_control.min(axis=0)) / phenotype_control.ptp(axis=0)
             phenotype_control = (phenotype_control - phenotype_control.min(axis=0)) / phenotype_control.ptp(axis=0)
@@ -274,9 +259,13 @@ def update_fitness(organism, config):
             loss += calculate_RMSE_weightened(phenotype_control, phenotype_model, weights)
 
         elif config['loss'] == 'composite_RMSE_V_CaT':
-            loss += calculate_composite_RMSE_V_CaT(phenotype_control, phenotype_model)
+            loss += calculate_composite_RMSE_V_CaT(phenotype_control.to_numpy(),
+                                                   phenotype_model.to_numpy())
 
         elif config['loss'] == 'composite_RMSE_V_CaT_noisy':
+
+            phenotype_model = phenotype_model.to_numpy()
+            phenotype_control = phenotype_control.to_numpy()
 
             phenotype_model   = (phenotype_model   - phenotype_control.min(axis=0)) / phenotype_control.ptp(axis=0)
             phenotype_control = (phenotype_control - phenotype_control.min(axis=0)) / phenotype_control.ptp(axis=0)
@@ -290,15 +279,6 @@ def update_fitness(organism, config):
                                                          signal_reference=phenotype_model[:, 1])
 
             loss += rmse_v * weights[0] + rmse_ca * weights[1]
-
-        elif config['loss'] == 'CaT_RMSE':
-            loss += RMSE(phenotype_control[:, 1],
-                         phenotype_model[:, 1])
-
-        elif config['loss'] == 'CaT_autoscaling':
-            ca_exp_scaled, rmse_ca, coeffs = autoscaling(signal_to_scale=phenotype_control[:, 1],
-                                                         signal_reference=phenotype_model[:, 1])
-            loss += rmse_ca
 
         else:
             print(f'Unknown loss {config["loss"]}',
