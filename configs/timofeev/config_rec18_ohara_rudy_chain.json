@@ -1,0 +1,94 @@
+{
+    "n_organisms": 4096,
+    "n_elites": 128,
+    "n_generations": 1000,
+
+    "output_folder_name": "../../results/timofeev/rec18",  # relative to pypoptim
+    # "initial_population_filename": "PATH/backup.pickle",
+
+    # genetic algorithm
+    "crossover_rate": 1.0,
+    "mutation_rate": 1.0,
+    "gamma": 1.0,
+    "loss": "RMSE",
+    "columns_control": ["V"],
+    "columns_model":   ["v"],
+    "align_depolarization": true,
+
+    # model
+    "filename_so": "../../src/model_ctypes/_ohara_rudy/model.so",
+    "filename_legend_states": "../../src/model_ctypes/_ohara_rudy/legend_states.csv",
+    "filename_legend_constants": "../../src/model_ctypes/_ohara_rudy/legend_constants.csv",
+
+    # needed for ctypes
+    "t_run": 9, # or "n_beats": 9
+    "t_sampling": 1,
+    "tol": 1e-4,
+    "stim_period_legend_name": "i_Stim_Period",
+    "experimental_conditions": {
+        "common": {
+
+            # TODO
+
+        },
+
+
+        "2000": {
+            "params": {
+                "i_Stim_Period": 2000,
+                "nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "ki": {
+                    "bounds": [100, 160],
+                    "gamma": 0.015
+                },
+                "cansr": {
+                    "bounds": [0.06, 6],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/timofeev/20200903 - Atrial EHM - 3 Hz pacing - rec18 -/20200903 - Atrial EHM - 3 Hz pacing - rec18 - 05 Hz.csv",
+            "filename_state": "../../data/ohara_rudy/syn/states/state_1000.txt"
+        },
+        "1000": {
+            "params": {
+                "i_Stim_Period": 1000,
+                "nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "ki": {
+                    "bounds": [100, 160],
+                    "gamma": 0.015
+                },
+                "cansr": {
+                    "bounds": [0.06, 6],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/timofeev/20200903 - Atrial EHM - 3 Hz pacing - rec18 -/20200903 - Atrial EHM - 3 Hz pacing - rec18 - 1 Hz.csv",
+            "filename_state": "../../data/ohara_rudy/syn/states/state_1000.txt"
+        },
+        "500": {
+            "params": {
+                "i_Stim_Period": 500,
+                "nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "ki": {
+                    "bounds": [100, 160],
+                    "gamma": 0.015
+                },
+                "cansr": {
+                    "bounds": [0.06, 6],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/timofeev/20200903 - Atrial EHM - 3 Hz pacing - rec18 -/20200903 - Atrial EHM - 3 Hz pacing - rec18 - 2 Hz.csv",
+            "filename_state": "../../data/ohara_rudy/syn/states/state_1000.txt"
+        }
+    }
+}

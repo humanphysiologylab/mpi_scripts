@@ -240,6 +240,22 @@ def update_fitness(organism, config):
 
         phenotype_model   = phenotype_model[:len(phenotype_control)]
 
+        if config.get('align_depolarization', False):
+
+            v_model = phenotype_model['V'].to_numpy()
+            v_control = phenotype_control['V'].to_numpy()
+
+            # shift_control = np.where(v_control > v_control.min() + v_control.ptp() / 2)[0][0]
+            # shift_model = np.where(v_model > v_model.min() + v_model.ptp() / 2)[0][0]
+
+            v_level = 0 # mV
+            shift_control = np.where(v_control > v_control.min() + v_level)[0][0]
+            shift_model = np.where(v_model > v_model.min() + v_level)[0][0]
+
+            shift = shift_model - shift_control
+
+            phenotype_control = np.roll(phenotype_control, shift, axis=1)
+
         if config['loss'] == 'RMSE':
             loss += RMSE(phenotype_control, phenotype_model)
 
