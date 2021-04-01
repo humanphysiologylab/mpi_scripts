@@ -3,7 +3,7 @@
     "n_elites": 128,
     "n_generations": 250,
 
-    "output_folder_name": "results/voigt/fluo/koivumaki/GGROUPINDEX/CCELLINDEX",
+    "output_folder_name": "results/voigt/fluo/grandi/GGROUPINDEX/CCELLINDEX",  # relative to pypoptim
     # "initial_population_filename": "PATH/backup.pickle",
 
     # genetic algorithm
@@ -12,107 +12,120 @@
     "gamma": 1.0,
     "loss": "V_CaT_shared",
     "columns_control": ["V", "CaT"],
-    "columns_model":   ["V", "fluo"],
+    "columns_model":   ["V", "fluo_mean"],
 
     # model
-    "filename_so": "src/model_ctypes/_koivumaki/koivumaki.so",
-    "filename_legend_states": "src/model_ctypes/_koivumaki/legend_states.csv",
-    "filename_legend_constants": "src/model_ctypes/_koivumaki/legend_constants.csv",
+    "filename_so": "src/model_ctypes/_grandi/model.so",
+    "filename_legend_states": "src/model_ctypes/_grandi/legend_states.csv",
+    "filename_legend_constants": "src/model_ctypes/_grandi/legend_constants.csv",
 
     # needed for ctypes
     "t_run": 9, # or "n_beats": 9
-    "t_sampling": 0.001,
+    "t_sampling": 1,
     "tol": 1e-4,
-    "stim_period_legend_name": "STIM_PERIOD",
+    "stim_period_legend_name": "stim_period",  # STIM_PERIOD for koivumaki
 
 
     "experimental_conditions": {
         "common": {
             "params": {
-                "STIM_LEVEL": 1.5,
+                "amplitude": -60.0,
+                "stim_duration": 1,
 
-                # "Mg_i": 1.0,  # vanessa
+                "Mg_i": 1.0,  # vanessa
                 "Na_o": 140,
                 "Ca_o": 2.0,
                 "K_o": 4,
 
-                "PNa": {
+                "INa_scaler": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
-                "gCaL": {
+                "INaB_scaler": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
-                "gt": {
+                "INaCa_scaler": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
-                "gKur": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "gK1": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "gKr": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "gKs": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "gNab": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "gCab": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "INaKmax": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "ICaPmax": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "gIf": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "kNaCa": {
+                "INaK_scaler": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
 
-                "Jrel_multiplier": {
+                "ICaL_scaler": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
-                "cpumps": {  # SERCA
+                "ICaB_scaler": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
-                "kSRleak": {
+                "ICaB_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "IpCa_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+
+                "Ito_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "IKr_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "IKs_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "IK1_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "IKp_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "IKur_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "IClCa_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "IClB_scaler": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+
+                "koCa": {  # RyR
+                    "bounds": [10, 30],
+                    "gamma": 0.015,
+                    "is_multiplier": false
+                },
+                "Jserca_scaler": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
@@ -126,16 +139,16 @@
             }
         },
 
-        "CL_VALUE": {"params": {"STIM_PERIOD": "STIM_PERIOD_VALUE",
-                          "Nai": {"bounds": [4, 16],
+        "CL_VALUE": {"params": {"stim_period": "STIM_PERIOD_VALUE",
+                          "Na_i": {"bounds": [4, 16],
                                   "gamma": 0.015},
-                          "Ki": {"bounds": [100, 160],
+                          "K_i": {"bounds": [100, 160],
                                  "gamma": 0.015},
-                          "CaSR": {"bounds": [0.06, 6],
+                          "Ca_sr": {"bounds": [0.06, 6],
                                    "gamma": 0.015}
                          },
                "filename_phenotype": "data/voigt/GGROUPINDEX/CCELLINDEX/phenotypes/phenotype_CL_PHENOTYPE_raw.csv",
-               "filename_state": "data/koivumaki/fluo/states/state_CL_STATE.txt"
+               "filename_state": "data/grandi/fluo/states/state_CL_STATE.txt"
         }
     }
 }

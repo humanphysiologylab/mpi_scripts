@@ -1,40 +1,35 @@
 {
     "n_organisms": 4096,
     "n_elites": 128,
-    "n_generations": 250,
+    "n_generations": 1000,
 
-    "output_folder_name": "results/voigt/fluo/koivumaki/GGROUPINDEX/CCELLINDEX",
+    "output_folder_name": "../../results/timofeev/rec18",  # relative to pypoptim
     # "initial_population_filename": "PATH/backup.pickle",
 
     # genetic algorithm
     "crossover_rate": 1.0,
     "mutation_rate": 1.0,
     "gamma": 1.0,
-    "loss": "V_CaT_shared",
-    "columns_control": ["V", "CaT"],
-    "columns_model":   ["V", "fluo"],
+    "loss": "RMSE",
+    "columns_control": ["V"],
+    "columns_model":   ["V"],
+    "align_depolarization": true,
 
     # model
-    "filename_so": "src/model_ctypes/_koivumaki/koivumaki.so",
-    "filename_legend_states": "src/model_ctypes/_koivumaki/legend_states.csv",
-    "filename_legend_constants": "src/model_ctypes/_koivumaki/legend_constants.csv",
+    "filename_so": "../../src/model_ctypes/_koivumaki/koivumaki.so",
+    "filename_legend_states": "../../src/model_ctypes/_koivumaki/legend_states.csv",
+    "filename_legend_constants": "../../src/model_ctypes/_koivumaki/legend_constants.csv",
 
     # needed for ctypes
     "t_run": 9, # or "n_beats": 9
     "t_sampling": 0.001,
     "tol": 1e-4,
     "stim_period_legend_name": "STIM_PERIOD",
-
-
     "experimental_conditions": {
         "common": {
             "params": {
-                "STIM_LEVEL": 1.5,
 
-                # "Mg_i": 1.0,  # vanessa
-                "Na_o": 140,
-                "Ca_o": 2.0,
-                "K_o": 4,
+                "fluo_tot": 0,
 
                 "PNa": {
                     "bounds": [0.1, 10],
@@ -107,7 +102,12 @@
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
-                "cpumps": {  # SERCA
+                "J_SERCASR_multiplier": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "J_bulkSERCA_multiplier": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
@@ -116,26 +116,67 @@
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
-                },
-
-                "fluo_tot": {
-                    "bounds": [0.01, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
                 }
             }
         },
 
-        "CL_VALUE": {"params": {"STIM_PERIOD": "STIM_PERIOD_VALUE",
-                          "Nai": {"bounds": [4, 16],
-                                  "gamma": 0.015},
-                          "Ki": {"bounds": [100, 160],
-                                 "gamma": 0.015},
-                          "CaSR": {"bounds": [0.06, 6],
-                                   "gamma": 0.015}
-                         },
-               "filename_phenotype": "data/voigt/GGROUPINDEX/CCELLINDEX/phenotypes/phenotype_CL_PHENOTYPE_raw.csv",
-               "filename_state": "data/koivumaki/fluo/states/state_CL_STATE.txt"
+
+        "2000": {
+            "params": {
+                "STIM_PERIOD": 2,
+                "Nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "Ki": {
+                    "bounds": [100, 160],
+                    "gamma": 0.015
+                },
+                "CaSR": {
+                    "bounds": [0.06, 6],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/timofeev/20200903 - Atrial EHM - 3 Hz pacing - rec18 -/20200903 - Atrial EHM - 3 Hz pacing - rec18 - 05 Hz.csv",
+            "filename_state": "../../data/koivumaki/original/states/state_1000.txt"
+        },
+        "1000": {
+            "params": {
+                "STIM_PERIOD": 1,
+                "Nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "Ki": {
+                    "bounds": [100, 160],
+                    "gamma": 0.015
+                },
+                "CaSR": {
+                    "bounds": [0.06, 6],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/timofeev/20200903 - Atrial EHM - 3 Hz pacing - rec18 -/20200903 - Atrial EHM - 3 Hz pacing - rec18 - 1 Hz.csv",
+            "filename_state": "../../data/koivumaki/original/states/state_1000.txt"
+        },
+        "500": {
+            "params": {
+                "STIM_PERIOD": 0.5,
+                "Nai": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "Ki": {
+                    "bounds": [100, 160],
+                    "gamma": 0.015
+                },
+                "CaSR": {
+                    "bounds": [0.06, 6],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/timofeev/20200903 - Atrial EHM - 3 Hz pacing - rec18 -/20200903 - Atrial EHM - 3 Hz pacing - rec18 - 2 Hz.csv",
+            "filename_state": "../../data/koivumaki/original/states/state_1000.txt"
         }
     }
 }

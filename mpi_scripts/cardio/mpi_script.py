@@ -103,6 +103,24 @@ else:
     model.run.restype = ctypes.c_int
     run_model_ctypes.model = model
 
+    config['run_chain'] = config.get('run_chain', False)
+
+    if config['run_chain']:
+
+        model.run_chain.argtypes = [
+            np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
+            np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS'),
+            ctypes.c_int,
+            ctypes.c_double,
+            ctypes.c_double,
+            ctypes.c_int,
+            ctypes.c_double,
+            ctypes.c_double,
+            np.ctypeslib.ndpointer(dtype=np.float64, ndim=2, flags='C_CONTIGUOUS')
+        ]
+
+        model.run_chain.restype = ctypes.c_int
+
 ###############################################################################
 
 
@@ -156,6 +174,7 @@ comm.Barrier()
 config['runtime']['output'] = dict(output_folder_name_phenotype = os.path.join(output_folder_name, "phenotype"),
                                    dump_filename                = os.path.join(output_folder_name, "dump.bin"),
                                    dump_last_filename           = os.path.join(output_folder_name, "dump_last.npy"),
+                                   dump_elite_filename          = os.path.join(output_folder_name, "dump_elite.npy"),
                                    backup_filename              = os.path.join(output_folder_name, "backup.pickle"),
                                    output_folder_name_mpi       = os.path.join(output_folder_name, "mpi"),
                                    config_backup_filename       = os.path.join(output_folder_name, "config_backup.pickle"),
@@ -171,10 +190,13 @@ if comm_rank == 0:
         os.makedirs(folder, exist_ok=True)
     with open(config['runtime']['output']['dump_filename'], "wb") as file_dump:  # create or clear and close
         pass
+    with open(config['runtime']['output']['dump_elite_filename'], "wb") as f:  # create or clear and close
+        pass
     with open(config['runtime']['output']['config_backup_filename'], "wb") as file_config_backup:
         pickle.dump(config, file_config_backup)
     with open(config['runtime']['output']['log_filename'], "w") as file_log:
         file_log.write(f"# SIZE = {comm_size}\n")
+
 
 time_start = time.time()
 

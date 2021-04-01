@@ -102,11 +102,33 @@
                     "is_multiplier": true
                 },
 
-                "Jrel_multiplier": {
+                #"Jrel_multiplier": {
+                #    "bounds": [0.1, 10],
+                #    "gamma": 0.015,
+                #    "is_multiplier": true
+                #},
+
+                "nu1": {
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
+                "nu2": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "nu3": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "nuss": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+
                 "cpumps": {  # SERCA
                     "bounds": [0.1, 10],
                     "gamma": 0.015,

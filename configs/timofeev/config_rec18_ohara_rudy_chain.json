@@ -1,7 +1,7 @@
 {
     "n_organisms": 4096,
     "n_elites": 128,
-    "n_generations": 1000,
+    "n_generations": 250,
 
     "output_folder_name": "../../results/timofeev/rec18",  # relative to pypoptim
     # "initial_population_filename": "PATH/backup.pickle",
@@ -13,6 +13,8 @@
     "loss": "RMSE",
     "columns_control": ["V"],
     "columns_model":   ["v"],
+
+    "run_chain": true,
     "align_depolarization": true,
 
     # model
@@ -23,13 +25,84 @@
     # needed for ctypes
     "t_run": 9, # or "n_beats": 9
     "t_sampling": 1,
-    "tol": 1e-4,
+    "tol": 1e-6,
     "stim_period_legend_name": "i_Stim_Period",
     "experimental_conditions": {
         "common": {
+            "params": {
 
-            # TODO
+                "i_Stim_Amplitude": -120, # -160
+                "i_Stim_PulseDuration": 1,
 
+                "GNa": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "GNaL": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+
+                "GK1": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "GKr": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "GKs": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "Gto": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+
+                "PCa": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "Gncx": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "Pnak": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "GpCa": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+
+                "Jrel_scaling_factor": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "cmdnmax": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "upScale": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                }
+            }
         },
 
 

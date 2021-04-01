@@ -96,8 +96,16 @@ def run_model_ctypes(S, C, config):
     n_samples_per_stim = int(stim_period / t_sampling)
     output = np.empty((n_samples_per_stim * n_beats + 1, len(S)))
 
-    status = run_model_ctypes.model.run(S.values.copy(), C.values.copy(),
-                                        n_beats, t_sampling, tol, output)
+    if config['run_chain']:
+        chain_length = 30
+        v_threshold = 1e-1
+        t_safe = 10
+        status = run_model_ctypes.model.run_chain(S.values.copy(), C.values.copy(),
+                                                  chain_length, v_threshold, t_safe,
+                                                  n_beats, t_sampling, tol, output)
+    else:
+        status = run_model_ctypes.model.run(S.values.copy(), C.values.copy(),
+                                            n_beats, t_sampling, tol, output)
 
     output = output[-n_samples_per_stim - 1:].T  # last beat
 
@@ -228,7 +236,67 @@ def update_fitness(organism, config):
     loss = 0
 
     columns_control = config.get("columns_control", ["V"])
-    columns_model = config.get("columns_control", ["V"])
+    columns_model = config.get("columns_model", ["V"])
+
+    if config['loss'] == 'V_CaT_shared':
+
+        phenotype_model_list = []
+        phenotype_control_list = []
+
+        for exp_cond_name, exp_cond in config['experimental_conditions'].items():
+
+            if exp_cond_name == 'common':
+                continue
+
+            phenotype_control = exp_cond['phenotype'][columns_control].copy()
+            phenotype_model   = organism['phenotype'][exp_cond_name][columns_model].copy()
+
+            phenotype_model   = phenotype_model[:len(phenotype_control)]
+
+            phenotype_model_list.append(phenotype_model.values)
+            phenotype_control_list.append(phenotype_control.values)
+
+        cat_model_concat = np.concatenate([x[:, 1] for x in phenotype_model_list])
+        cat_control_concat = np.concatenate([x[:, 1] for x in phenotype_control_list])
+
+        cat_control_concat_scaled, _, (alpha, beta) = autoscaling(signal_to_scale=cat_control_concat,
+                                                                  signal_reference=cat_model_concat)
+
+        if alpha == 0:
+            organism['fitness'] = np.NINF
+            return
+        #
+        # #
+        # np.savetxt("./misc/control.txt", cat_control_concat_scaled)
+        # np.savetxt("./misc/model.txt", cat_model_concat);
+
+
+        cumlen = 0
+        for i, x in enumerate(phenotype_control_list):
+
+            phenotype_control_list[i][:, 1] = cat_control_concat_scaled[cumlen: cumlen + len(x)]
+            cumlen += len(x)
+
+            phenotype_control = phenotype_control_list[i]
+            phenotype_model   = phenotype_model_list[i]
+
+            phenotype_control = (phenotype_control - phenotype_model.min(axis=0)) / phenotype_model.ptp(axis=0)
+            phenotype_model   = (phenotype_model   - phenotype_model.min(axis=0)) / phenotype_model.ptp(axis=0)
+
+            weights = 1 / calculate_mean_abs_noise(phenotype_control)
+            weights /= sum(weights)
+
+            # print(weights); exit()
+
+            from sklearn.metrics import mean_squared_error as MSE
+
+            rmse = calculate_RMSE_weightened(phenotype_control, phenotype_model, weights)
+
+            loss += rmse
+
+        organism['fitness'] = -loss
+        return
+
 
     for exp_cond_name, exp_cond in config['experimental_conditions'].items():
 
@@ -242,8 +310,11 @@ def update_fitness(organism, config):
 
         if config.get('align_depolarization', False):
 
-            v_model = phenotype_model['V'].to_numpy()
-            v_control = phenotype_control['V'].to_numpy()
+            column_v_model = 'V' if 'V' in phenotype_model else 'v'
+            column_v_control = 'V' if 'V' in phenotype_control else 'v'
+
+            v_model = phenotype_model[column_v_model].to_numpy()
+            v_control = phenotype_control[column_v_control].to_numpy()
 
             # shift_control = np.where(v_control > v_control.min() + v_control.ptp() / 2)[0][0]
             # shift_model = np.where(v_model > v_model.min() + v_model.ptp() / 2)[0][0]
@@ -315,6 +386,7 @@ def save_epoch(population, kw_output):
 
     dump_filename = kw_output['dump_filename']
     dump_last_filename = kw_output['dump_last_filename']
+    dump_elite_filename = kw_output['dump_elite_filename']
     backup_filename = kw_output['backup_filename']
     log_filename = kw_output['log_filename']
 
@@ -337,8 +409,8 @@ def save_epoch(population, kw_output):
     np.save(dump_last_filename, dump_current)
 
     #  timer.start('output_backup')
-    with open(backup_filename, "wb") as file_backup:
-        pickle.dump(population, file_backup)
+    # with open(backup_filename, "wb") as file_backup:
+    #     pickle.dump(population, file_backup)
     #  timer.end('output_backup')
 
     with open(log_filename, "a") as file_log:
@@ -346,6 +418,9 @@ def save_epoch(population, kw_output):
                             formatter={'float_kind': lambda x: "%.3f" % x},
                             max_line_width=1000)[1:-1] + "\n"
         file_log.write(s)
+
+    with open(dump_elite_filename, 'ba+') as f:
+        dump_current[0, :].tofile(f)
 
 
 @njit
