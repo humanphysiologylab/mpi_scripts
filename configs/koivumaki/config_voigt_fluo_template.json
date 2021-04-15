@@ -1,7 +1,7 @@
 {
     "n_organisms": 4096,
     "n_elites": 128,
-    "n_generations": 250,
+    "n_generations": 1000,
 
     "output_folder_name": "results/voigt/fluo/koivumaki/GGROUPINDEX/CCELLINDEX",
     # "initial_population_filename": "PATH/backup.pickle",

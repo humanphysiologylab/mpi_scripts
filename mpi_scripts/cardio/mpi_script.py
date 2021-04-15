@@ -23,7 +23,7 @@ from utils import create_genes_dict_from_config, create_constants_dict_from_conf
                   run_model_ctypes, run_model_scipy, \
                   update_phenotype_state, update_fitness, \
                   generate_bounds_gammas_mask_multipliers, \
-                  save_epoch, plot_phenotypes, \
+                  save_epoch, \
                   transform_genes_bounds, transform_genes_bounds_back
 
 

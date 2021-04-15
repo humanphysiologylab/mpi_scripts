@@ -103,12 +103,7 @@
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
-                "J_SERCASR_multiplier": {
-                    "bounds": [0.1, 10],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "J_bulkSERCA_multiplier": {
+                "cpumps": {  # SERCA
                     "bounds": [0.1, 10],
                     "gamma": 0.015,
                     "is_multiplier": true

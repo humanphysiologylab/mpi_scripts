@@ -320,8 +320,8 @@ def update_fitness(organism, config):
             # shift_model = np.where(v_model > v_model.min() + v_model.ptp() / 2)[0][0]
 
             v_level = 0 # mV
-            shift_control = np.where(v_control > v_control.min() + v_level)[0][0]
-            shift_model = np.where(v_model > v_model.min() + v_level)[0][0]
+            shift_control = np.where(v_control > v_level)[0][0]
+            shift_model = np.where(v_model > v_level)[0][0]
 
             shift = shift_model - shift_control
 
@@ -408,10 +408,10 @@ def save_epoch(population, kw_output):
 
     np.save(dump_last_filename, dump_current)
 
-    #  timer.start('output_backup')
-    # with open(backup_filename, "wb") as file_backup:
-    #     pickle.dump(population, file_backup)
-    #  timer.end('output_backup')
+    # timer.start('output_backup')
+    with open(backup_filename, "wb") as file_backup:
+        pickle.dump(population, file_backup)
+    # timer.end('output_backup')
 
     with open(log_filename, "a") as file_log:
         s = np.array2string(dump_current[0, :],
@@ -467,86 +467,3 @@ def transform_genes_bounds_back(genes_transformed, bounds_transformed, bounds_ba
             genes_back[i] = lb_back + (gene - lb_tran) / (ub_tran - lb_tran) * (ub_back - lb_back)
 
     return genes_back
-
-
-def plot_phenotypes(organism, config, filename_save):
-
-    exp_cond_dict = [item for item in config['experimental_conditions'].items() if item[0] != 'common']
-    phenotype_model_last = organism['phenotype']
-
-    nrows = 2
-    ncols = len(phenotype_model_last)
-
-    fig, axes = plt.subplots(nrows=nrows, ncols=ncols,
-                             figsize=plt.figaspect(nrows / ncols),
-                             sharex='col', sharey='row')
-
-    for i_item, item in enumerate(['V', 'Cai']):
-
-        for i_cond, (exp_cond_name, exp_cond) in enumerate(exp_cond_dict):
-
-            ax = axes[i_item, i_cond]
-
-            ax.set_title(f'CL = {exp_cond_name} ms')
-            ax.set_xlabel('time, ms')
-
-            xlim_right = 450
-            ax.set_xticks(np.arange(0, xlim_right + 1, 100))
-            ax.set_xlim(-20, xlim_right)
-
-            ax.grid(True)
-
-            exp = exp_cond['phenotype'][item]
-
-            if item == 'Cai':
-
-                ax_inset = None
-
-                legend = config['runtime']['legend']
-                volumes = legend['constants'][['Vss'] + [f'Vnonjunct{i}' for i in range(1, 4 + 1)]]
-                concentrations = phenotype_model_last[exp_cond_name][['Cass'] + [f'Cai{i}' for i in range(1, 4 + 1)]]
-                Cai_mean = (concentrations.values * volumes.values).sum(axis=1) / sum(volumes)
-                Cai_mean = Cai_mean[:len(exp)]
-
-                model = Cai_mean
-
-            else:
-
-                ax.set_yticks(np.arange(-100, 75 + 1, 25))
-                ax.set_ylim(-100, 75)
-
-                ax_inset = ax.inset_axes([0.5, 0.5, 0.4, 0.4])
-
-                ax_inset.set_xlim(-1, 6)
-                ax_inset.set_ylim(ax.get_ylim())
-                ax_inset.set_yticks(ax.get_yticks()[1:-1])
-                ax_inset.set_xticks(np.arange(-1, 6 + 1, 1))
-                ax_inset.tick_params(axis='both', labelsize='x-small')
-
-                ax_inset.grid(True)
-
-                model = phenotype_model_last[exp_cond_name]['V'].values[:len(exp)]
-
-            exp, model = map(lambda x: np.roll(x, 1), [exp, model])
-
-            if i_cond == 0:
-                ax.set_ylabel(item)
-
-            for ml, ax_ in zip(['-', '.-'], [ax, ax_inset]):
-
-                if ax_ is None:
-                    continue
-
-                ax_.plot(exp, ml, color='w', lw=3)
-                ax_.plot(exp, ml, color='0.3', lw=2.5, label='exp')
-
-                ax_.plot(model, ml, color='w', lw=2)
-                ax_.plot(model, ml, color='C3', lw=1.25, label='model')
-
-    fig.align_labels()
-    plt.tight_layout()
-    plt.subplots_adjust(top=0.85)
-
-    fig.suptitle(filename_save)
-
-    plt.savefig(filename_save, dpi=300, facecolor='white')
