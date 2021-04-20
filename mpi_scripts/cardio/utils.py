@@ -74,7 +74,7 @@ def init_population_from_backup(backup, config):
     return population
 
 
-def run_model_ctypes(S, C, config):
+def run_model_ctypes(S, C, stim_protocol, config):
 
     stim_period = C[config['stim_period_legend_name']]
     t_sampling = config['t_sampling']
@@ -105,7 +105,10 @@ def run_model_ctypes(S, C, config):
                                                   n_beats, t_sampling, tol, output)
     else:
         status = run_model_ctypes.model.run(S.values.copy(), C.values.copy(),
-                                            n_beats, t_sampling, tol, output)
+                                            n_beats, t_sampling, tol, output,
+                                            None, None,
+                                            stim_protocol,
+                                            )
 
     output = output[-n_samples_per_stim - 1:].T  # last beat
 
@@ -210,7 +213,10 @@ def update_phenotype_state(organism, config):
             if (status != 0) or np.any(np.isnan(res)):
                 return 1
         else:
-            status, res = run_model_ctypes(S, C, config)
+            stim_protocol = config['experimental_conditions'][exp_cond_name]['stim_protocol']
+            if stim_protocol is not None:
+                stim_protocol = stim_protocol.values.copy()
+            status, res = run_model_ctypes(S, C, stim_protocol, config)
             if (status != 2) or np.any(np.isnan(res)):
                 return 1
 
