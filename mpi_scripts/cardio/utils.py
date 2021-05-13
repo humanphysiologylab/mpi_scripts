@@ -110,7 +110,10 @@ def run_model_ctypes(S, C, stim_protocol, config):
                                             stim_protocol,
                                             )
 
-    output = output[-n_samples_per_stim - 1:].T  # last beat
+
+    n_beats_save = config.get('n_beats_save', 1)
+
+    output = output[-n_samples_per_stim * n_beats_save - 1:].T
 
     return status, output
 
@@ -239,6 +242,14 @@ def update_phenotype_state(organism, config):
 
 
 def update_fitness(organism, config):
+
+    def calculate_n_samples_per_stim(exp_cond_name, config):
+        stim_period_legend_name = config['stim_period_legend_name']
+        stim_period = exp_cond['params'][stim_period_legend_name]
+        t_sampling = config['t_sampling']
+        n_samples_per_stim = int(stim_period / t_sampling)
+        return n_samples_per_stim
+
     loss = 0
 
     columns_control = config.get("columns_control", ["V"])
@@ -254,8 +265,10 @@ def update_fitness(organism, config):
             if exp_cond_name == 'common':
                 continue
 
-            phenotype_control = exp_cond['phenotype'][columns_control].copy()
-            phenotype_model   = organism['phenotype'][exp_cond_name][columns_model].copy()
+            n_samples_per_stim = calculate_n_samples_per_stim(exp_cond_name, config)
+
+            phenotype_control = exp_cond['phenotype'][columns_control].copy()[-n_samples_per_stim - 1:]
+            phenotype_model   = organism['phenotype'][exp_cond_name][columns_model].copy()[-n_samples_per_stim - 1:]
 
             phenotype_model   = phenotype_model[:len(phenotype_control)]
 
@@ -309,8 +322,10 @@ def update_fitness(organism, config):
         if exp_cond_name == 'common':
             continue
 
-        phenotype_control = exp_cond['phenotype'][columns_control]
-        phenotype_model   = organism['phenotype'][exp_cond_name][columns_model]
+        n_samples_per_stim = calculate_n_samples_per_stim(exp_cond_name, config)
+
+        phenotype_control = exp_cond['phenotype'][columns_control][-n_samples_per_stim - 1:]
+        phenotype_model   = organism['phenotype'][exp_cond_name][columns_model][-n_samples_per_stim - 1:]
 
         phenotype_model   = phenotype_model[:len(phenotype_control)]
 

@@ -20,7 +20,7 @@
     "filename_legend_constants": "src/model_ctypes/_grandi/legend_constants.csv",
 
     # needed for ctypes
-    "t_run": 9, # or "n_beats": 9
+    "t_run": 9000, # grandi uses ms!
     "t_sampling": 1,
     "tol": 1e-4,
     "stim_period_legend_name": "stim_period",  # STIM_PERIOD for koivumaki
