@@ -1,0 +1,211 @@
+{
+    "n_organisms": 4096,
+    "n_elites": 128,
+    "n_generations": 1000,
+
+    "output_folder_name": "../../results/grandi/syn/",  # relative to pypoptim
+    # "initial_population_filename": "PATH/backup.pickle",
+
+    # genetic algorithm
+    "crossover_rate": 1.0,
+    "mutation_rate": 1.0,
+    "gamma": 1.0,
+    "loss": "composite_RMSE_V_CaT",
+    "columns_control": ["V", "Ca_i"],
+    "columns_model":   ["V", "Ca_i"],
+
+    # model
+    "filename_so": "../../src/model_ctypes/_grandi/model.so",
+    "filename_legend_states": "../../src/model_ctypes/_grandi/legend_states.csv",
+    "filename_legend_constants": "../../src/model_ctypes/_grandi/legend_constants.csv",
+
+    # needed for ctypes
+    "t_run": 9000, # grandi uses ms!
+    "t_sampling": 1,
+    "tol": 1e-4,
+    "stim_period_legend_name": "stim_period",  # STIM_PERIOD for koivumaki
+
+        "experimental_conditions": {
+            "common": {
+                "params": {
+                    "amplitude": -60.0,
+                    "stim_duration": 1,
+
+                    "INa_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "INaB_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "INaCa_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "INaK_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+
+                    "ICaL_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "ICaB_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "ICaB_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "IpCa_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+
+                    "Ito_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "IKr_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "IKs_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "IK1_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "IKp_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "IKur_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "IClCa_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "IClB_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+
+                    "Jrel_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    },
+                    "Jserca_scaler": {
+                        "bounds": [0.1, 10],
+                        "gamma": 0.015,
+                        "is_multiplier": true
+                    }
+                }
+            },
+
+
+            "2000": {
+                "params": {
+                    "stim_period": 2000,
+                    "Na_i": {
+                        "bounds": [4, 16],
+                        "gamma": 0.015
+                    },
+                    "K_i": {
+                        "bounds": [100, 160],
+                        "gamma": 0.015
+                    },
+                    "Ca_sr": {
+                        "bounds": [0.06, 6],
+                        "gamma": 0.015
+                    }
+                },
+                "filename_phenotype": "../../data/grandi/syn/phenotypes/phenotype_2000.csv",
+                "filename_state": "../../data/grandi/syn/states/state_1000.txt"
+            },
+
+            "1000": {
+                "params": {
+                    "stim_period": 1000,
+                    "Na_i": {
+                        "bounds": [4, 16],
+                        "gamma": 0.015
+                    },
+                    "K_i": {
+                        "bounds": [100, 160],
+                        "gamma": 0.015
+                    },
+                    "Ca_sr": {
+                        "bounds": [0.06, 6],
+                        "gamma": 0.015
+                    }
+                },
+                "filename_phenotype": "../../data/grandi/syn/phenotypes/phenotype_1000.csv",
+                "filename_state": "../../data/grandi/syn/states/state_1000.txt"
+            },
+
+            "666": {
+                "params": {
+                    "stim_period": 666,
+                    "Na_i": {
+                        "bounds": [4, 16],
+                        "gamma": 0.015
+                    },
+                    "K_i": {
+                        "bounds": [100, 160],
+                        "gamma": 0.015
+                    },
+                    "Ca_sr": {
+                        "bounds": [0.06, 6],
+                        "gamma": 0.015
+                    }
+                },
+                "filename_phenotype": "../../data/grandi/syn/phenotypes/phenotype_666.csv",
+                "filename_state": "../../data/grandi/syn/states/state_1000.txt"
+            },
+
+            "500": {
+                "params": {
+                    "stim_period": 500,
+                    "Na_i": {
+                        "bounds": [4, 16],
+                        "gamma": 0.015
+                    },
+                    "K_i": {
+                        "bounds": [100, 160],
+                        "gamma": 0.015
+                    },
+                    "Ca_sr": {
+                        "bounds": [0.06, 6],
+                        "gamma": 0.015
+                    }
+                },
+                "filename_phenotype": "../../data/grandi/syn/phenotypes/phenotype_500.csv",
+                "filename_state": "../../data/grandi/syn/states/state_1000.txt"
+            }
+        }
+    }
