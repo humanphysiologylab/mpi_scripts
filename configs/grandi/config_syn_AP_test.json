@@ -30,6 +30,7 @@
                 "params": {
                     "amplitude": -60.0,
                     "stim_duration": 1,
+                    "fluo_tot": 0,
 
                     "INa_scaler": {
                         "bounds": [0.1, 10],
