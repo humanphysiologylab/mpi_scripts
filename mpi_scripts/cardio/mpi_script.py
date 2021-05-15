@@ -26,6 +26,7 @@ from utils import create_genes_dict_from_config, create_constants_dict_from_conf
                   save_epoch, \
                   transform_genes_bounds, transform_genes_bounds_back
 
+import git
 
 #### ##    ## #### ########
  ##  ###   ##  ##     ##
@@ -53,6 +54,8 @@ with open(config_filename) as f:
     config = json.loads(text)
 
 config['runtime'] = dict()
+
+config['runtime']['sha'] = git.Repo(search_parent_directories=True).head.commit.hexsha
 
 config['runtime']['genes_dict'] = create_genes_dict_from_config(config)
 config['runtime']['constants_dict'] = create_constants_dict_from_config(config)
@@ -220,6 +223,7 @@ if comm_rank == 0:
         pickle.dump(config, file_config_backup)
     with open(config['runtime']['output']['log_filename'], "w") as file_log:
         file_log.write(f"# SIZE = {comm_size}\n")
+        file_log.write(f"# commit {config['runtime']['sha']}\n")
 
 
 time_start = time.time()
