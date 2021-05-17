@@ -1,0 +1,46 @@
+{
+    "n_organisms": 16,
+    "n_elites": 1,
+    "n_generations": 5,
+
+    "output_folder_name": "../../results/bondarenko/syn",
+
+    "crossover_rate": 1.0,
+    "mutation_rate": 1.0,
+    "gamma": 1.0,
+    "loss": "RMSE",
+
+    "use_scipy": false,
+    "filename_so": "../../src/model_ctypes/_bondarenko/model.so",
+    "filename_legend_states": "../../src/model_ctypes/_bondarenko/legend_states.csv",
+    "filename_legend_constants": "../../src/model_ctypes/_bondarenko/legend_constants.csv",
+
+    "t_run": 1,
+    "t_sampling": 1,
+
+    "stim_period_legend_name": "CL",
+
+
+    "experimental_conditions": {
+        "common": {
+            "params": {
+
+                "gna": {
+                    "bounds": [0.9, 1.1],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                }
+            }
+        } ,
+
+
+
+        "1000": {
+            "params": {
+                "CL": 1000
+            },
+            "filename_phenotype": "../../data/bondarenko/syn/phenotypes/phenotype_1000.csv",
+            "filename_state": "../../data/bondarenko/syn/states/state_500.txt"
+        }
+    }
+}
