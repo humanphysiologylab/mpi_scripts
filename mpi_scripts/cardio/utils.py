@@ -93,8 +93,18 @@ def run_model_ctypes(S, C, stim_protocol, config):
 
     tol = config.get('tol', 1e-6)
 
-    n_samples_per_stim = int(stim_period / t_sampling)
+    n_samples_per_stim = int(np.round(stim_period / t_sampling))
     output = np.empty((n_samples_per_stim * n_beats + 1, len(S)))
+
+    if stim_protocol is not None:
+        stim_protocol_Ist = stim_protocol[config['column_stim_protocol']].values.copy()
+        if config.get('sparsed_protocol', False):
+            stim_protocol_t = stim_protocol['t'].values.copy()
+        else:
+            stim_protocol_t = None
+    else:
+        stim_protocol_t = None
+        stim_protocol_Ist = None
 
     if config['run_chain']:
         chain_length = 30
@@ -107,9 +117,8 @@ def run_model_ctypes(S, C, stim_protocol, config):
         status = run_model_ctypes.model.run(S.values.copy(), C.values.copy(),
                                             n_beats, t_sampling, tol, output,
                                             None, None,
-                                            stim_protocol,
+                                            stim_protocol_Ist,  stim_protocol_t
                                             )
-
 
     n_beats_save = config.get('n_beats_save', 1)
 
@@ -217,8 +226,8 @@ def update_phenotype_state(organism, config):
                 return 1
         else:
             stim_protocol = config['experimental_conditions'][exp_cond_name]['stim_protocol']
-            if stim_protocol is not None:
-                stim_protocol = stim_protocol.values.copy()
+            # if stim_protocol is not None:
+            #     stim_protocol = stim_protocol.values.copy()
             status, res = run_model_ctypes(S, C, stim_protocol, config)
             if (status != 2) or np.any(np.isnan(res)):
                 return 1
@@ -340,9 +349,16 @@ def update_fitness(organism, config):
             # shift_control = np.where(v_control > v_control.min() + v_control.ptp() / 2)[0][0]
             # shift_model = np.where(v_model > v_model.min() + v_model.ptp() / 2)[0][0]
 
-            v_level = 0 # mV
-            shift_control = np.where(v_control > v_level)[0][0]
+            v_level = np.mean(v_model) # 0 # mV
             shift_model = np.where(v_model > v_level)[0][0]
+            shift_control = np.where(v_control > v_level)[0]
+
+            if not len(shift_control):
+                loss = np.inf
+                organism['fitness'] = -loss
+                return
+
+            shift_control = shift_control[0]
 
             shift = shift_model - shift_control
 

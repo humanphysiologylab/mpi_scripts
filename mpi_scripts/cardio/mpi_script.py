@@ -116,10 +116,12 @@ else:
 
         DoubleArrayType_2D, #np.ctypeslib.ndpointer(dtype=np.float64, ndim=2, flags='C_CONTIGUOUS'), # double *output_A
         DoubleArrayType_1D, #np.ctypeslib.ndpointer(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS') # double *output_t
-        DoubleArrayType_1D, # double *stim_protocol
+        DoubleArrayType_1D, # double *stim_protocol_Ist
+        DoubleArrayType_1D, # double *stim_protocol_t
     ]
 
     model.run.restype = ctypes.c_int
+
     run_model_ctypes.model = model
 
     config['run_chain'] = config.get('run_chain', False)
@@ -174,7 +176,7 @@ for exp_cond_name, exp_cond in config['experimental_conditions'].items():
     column_stim_protocol = config.get('column_stim_protocol', None)
     if column_stim_protocol is not None:
         filename_stim_protocol = os.path.normpath(os.path.join(config_path, exp_cond['filename_stim_protocol']))
-        exp_cond['stim_protocol'] = pd.read_csv(filename_stim_protocol)[column_stim_protocol]  # pd.Series is returned
+        exp_cond['stim_protocol'] = pd.read_csv(filename_stim_protocol) # [column_stim_protocol]  # pd.Series is returned
         exp_cond['filename_stim_protocol'] = filename_stim_protocol
     else:
         exp_cond['stim_protocol'] = None
