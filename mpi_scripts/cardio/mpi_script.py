@@ -14,17 +14,18 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 from src.helpers import batches_from_list, argmax_list_of_dicts, \
-                        Timer, find_index_first, strip_comments
+                        Timer, find_index_first, strip_comments, \
+                        DoubleArrayType_1D, DoubleArrayType_2D
 
-from src.algorythm.ga import do_step
+from src.algorythm.ga import do_step, transform_genes_bounds, transform_genes_bounds_back
 
-from utils import create_genes_dict_from_config, create_constants_dict_from_config, \
+from src.cardio import create_genes_dict_from_config, create_constants_dict_from_config, \
                   init_population, init_population_from_backup, \
                   run_model_ctypes, run_model_scipy, \
                   update_phenotype_state, update_fitness, \
                   generate_bounds_gammas_mask_multipliers, \
-                  save_epoch, \
-                  transform_genes_bounds, transform_genes_bounds_back
+                  save_epoch
+
 
 import git
 
@@ -75,18 +76,6 @@ config['runtime']['m_index'] = m_index
 ##    ##    ##       ##    ##        ##       ##    ##
  ######     ##       ##    ##        ########  ######
 
-def wrapped_ndptr(*args, **kwargs):
-    base = np.ctypeslib.ndpointer(*args, **kwargs)
-    def from_param(cls, obj):
-        if obj is None:
-            return obj
-        return base.from_param(obj)
-    return type(base.__name__, (base,), {'from_param': classmethod(from_param)})
-
-DoubleArrayType_1D = wrapped_ndptr(dtype=np.float64, ndim=1, flags='C_CONTIGUOUS')
-DoubleArrayType_2D = wrapped_ndptr(dtype=np.float64, ndim=2, flags='C_CONTIGUOUS')
-
-
 filename_so = os.path.join(config_path, config["filename_so"])
 filename_so_abs = os.path.abspath(filename_so)
 
@@ -119,9 +108,7 @@ else:
         DoubleArrayType_1D, # double *stim_protocol_Ist
         DoubleArrayType_1D, # double *stim_protocol_t
     ]
-
     model.run.restype = ctypes.c_int
-
     run_model_ctypes.model = model
 
     config['run_chain'] = config.get('run_chain', False)
@@ -392,16 +379,13 @@ for epoch in range(config['n_generations']):
 
     timer.start('save_phenotype')
     if comm_rank == comm_rank_best:
-        # print(f"rank {comm_rank_best}: index_best = {index_best}, {index_best_batch}", flush=True)
+
         organism_best = batch[index_best_batch]
 
         with open(config['runtime']['output']['organism_best_filename'], 'bw') as f:
             pickle.dump(organism_best, f)
 
         organism_best['genes'].to_csv(config['runtime']['output']['genes_best_filename'])
-        #
-        # plot_phenotypes(organism_best, config,
-        #                 filename_save=config['runtime']['output']['phenotypes_plot_filename'])
 
         for exp_cond_name in config['experimental_conditions']:
             if exp_cond_name == 'common':
@@ -421,15 +405,6 @@ for epoch in range(config['n_generations']):
                 df.values.astype(np.float32).tofile(f)
 
     timer.end('save_phenotype')
-
-    # timer.start('output_sort')
-    # timer.end('output_sort')
-    # timer.start('output_prepare')
-    # timer.end('output_prepare')
-    # timer.start('output_dump')
-    # timer.end('output_dump')
-    # timer.start('output_backup')
-    # timer.end('output_backup')
 
     if comm_rank == epoch % comm_size:
         save_epoch(population, config['runtime']['output'])
