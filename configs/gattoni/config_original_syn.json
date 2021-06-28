@@ -1,0 +1,82 @@
+{
+    "n_organisms": 64,
+    "n_elites": 4,
+    "n_generations": 10,
+
+    "output_folder_name": "../../results/gattoni/syn/",
+    # "initial_population_filename": "PATH/backup.pickle",
+
+    # genetic algorithm
+    "crossover_rate": 1.0,
+    "mutation_rate": 1.0,
+    "gamma": 1.0,
+    "loss": "RMSE",
+    "columns_control": ["V"],
+    "columns_model":   ["V"],
+
+    # model
+    "filename_so": "../../src/model_ctypes/_gattoni/gattoni.so",
+    "filename_legend_states": "../../src/model_ctypes/_gattoni/legend_states_6Hz.csv",
+    "filename_legend_constants": "../../src/model_ctypes/_gattoni/legend_constants_6Hz.csv",
+
+    # needed for ctypes
+    "t_run": 9000, # or "n_beats": 9
+    "t_sampling": 1,
+    "tol": 1e-4,
+    "stim_period_legend_name": "stim_period",
+
+
+    "experimental_conditions": {
+        "common": {
+            "params": {
+
+                "g_Na": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                }
+            }
+        },
+
+
+        "1000": {
+            "params": {
+                "stim_period": 1000,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.015
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 6],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/gattoni/original/phenotypes/phenotype_1000.csv",
+            "filename_state": "../../data/gattoni/original/states/state_167.txt"
+        },
+
+        "500": {
+            "params": {
+                "stim_period": 500,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.015
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 6],
+                    "gamma": 0.015
+                }
+            },
+            "filename_phenotype": "../../data/gattoni/original/phenotypes/phenotype_500.csv",
+            "filename_state": "../../data/gattoni/original/states/state_167.txt"
+        }
+    }
+}
