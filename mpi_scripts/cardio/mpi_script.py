@@ -13,13 +13,13 @@ import ctypes
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
-from src.helpers import batches_from_list, argmax_list_of_dicts, \
+from pypoptim.helpers import batches_from_list, argmax_list_of_dicts, \
                         Timer, find_index_first, strip_comments, \
                         DoubleArrayType_1D, DoubleArrayType_2D
 
-from src.algorythm.ga import do_step, transform_genes_bounds, transform_genes_bounds_back
+from pypoptim.algorythm.ga import do_step, transform_genes_bounds, transform_genes_bounds_back
 
-from src.cardio import create_genes_dict_from_config, create_constants_dict_from_config, \
+from pypoptim.cardio import create_genes_dict_from_config, create_constants_dict_from_config, \
                   init_population, init_population_from_backup, \
                   run_model_ctypes, run_model_scipy, \
                   update_phenotype_state, update_fitness, \
@@ -208,12 +208,9 @@ if comm_rank == 0:
         pass
     with open(config['runtime']['output']['dump_elite_filename'], "wb") as f:  # create or clear and close
         pass
-    with open(config['runtime']['output']['config_backup_filename'], "wb") as file_config_backup:
-        pickle.dump(config, file_config_backup)
     with open(config['runtime']['output']['log_filename'], "w") as file_log:
         file_log.write(f"# SIZE = {comm_size}\n")
         file_log.write(f"# commit {config['runtime']['sha']}\n")
-
 
 time_start = time.time()
 
@@ -267,6 +264,10 @@ else:
     population = None
 
 batch = comm.scatter(population, root=0)
+
+if comm_rank == 0:
+    with open(config['runtime']['output']['config_backup_filename'], "wb") as file_config_backup:
+        pickle.dump(config, file_config_backup)
 
 timer = Timer()
 
