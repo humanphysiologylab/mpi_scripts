@@ -9,9 +9,7 @@ import numpy as np
 import pandas as pd
 
 import ctypes
-
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 
 from pypoptim.helpers import batches_from_list, argmax_list_of_dicts, \
                         Timer, find_index_first, strip_comments, \
