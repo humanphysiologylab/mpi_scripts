@@ -85,7 +85,7 @@ def prepare_config(config_filename):
     return config
 
 
-def update_output_dict(config) -> dict:
+def update_output_dict(config):
 
     folder = os.path.normpath(os.path.join(config['runtime']['config_path'],
                                                        config.get("output_folder_name", "./results")))
