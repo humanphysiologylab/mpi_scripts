@@ -61,8 +61,7 @@ def prepare_config(config_filename):
         column_stim_protocol = config.get('column_stim_protocol', None)
         if column_stim_protocol is not None:
             filename_stim_protocol = os.path.normpath(os.path.join(config_path, exp_cond['filename_stim_protocol']))
-            exp_cond['stim_protocol'] = pd.read_csv(
-                filename_stim_protocol)  # [column_stim_protocol]  # pd.Series is returned
+            exp_cond['stim_protocol'] = pd.read_csv(filename_stim_protocol)  # [column_stim_protocol]  # pd.Series is returned
             exp_cond['filename_stim_protocol'] = filename_stim_protocol
         else:
             exp_cond['stim_protocol'] = None
@@ -94,11 +93,10 @@ def update_output_dict(config):
     config['runtime']['time_suffix'] = time_suffix
 
     config['runtime']['output'] = dict(folder=folder,
-                                       folder_phenotype=os.path.join(folder, "phenotype"),
                                        folder_dump=os.path.join(folder, "dump"),
-                                       folder_best=os.path.join(folder, "best")
-                                       # population_backup=os.path.join(output_folder_name, "backup.pickle"),
-                                       # log=os.path.join(output_folder_name, "runtime.log"),
+                                       folder_best=os.path.join(folder, "best"),
+                                       folder_phenotype = os.path.join(folder, "phenotype"),
+                                       folder_state=os.path.join(folder, "state")
                                        )
 
 
@@ -148,17 +146,20 @@ def save_sol_best(sol_best, config):
         df = sol_best['phenotype'][exp_cond_name]
 
         # Rewrite last epoch
-        filename_phenotype_save_csv = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}.csv")
-        df.to_csv(filename_phenotype_save_csv, index=False)
+        filename = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}.csv")
+        df.to_csv(filename, index=False)
 
         # Append last epoch to previous
-        filename_phenotype_save_binary = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}")
-        if not os.path.isfile(filename_phenotype_save_binary):
-            with open(filename_phenotype_save_binary, "wb") as f:
+        filename = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}")
+        if not os.path.isfile(filename):
+            with open(filename, "wb") as f:
                 pass
 
-        with open(filename_phenotype_save_binary, 'ba+') as f:
+        with open(filename, 'ba+') as f:
             df.values.astype(np.float32).tofile(f)
+
+    filename = os.path.join(output_dict['folder'], 'state_best.csv')
+    sol_best['state'].to_csv(filename)
 
     d = dict(genes=sol_best.x,
              state=sol_best['state'].values,
@@ -167,3 +168,62 @@ def save_sol_best(sol_best, config):
 
     folder_best = output_dict['folder_best']
     dump_dict(d, folder_best)
+
+
+def collect_results(case, dirname_results, voigt=False):
+
+    if voigt:
+        group, cell, suffix = case.split('/')
+        group, cell = int(group[-1]), int(cell[-1])
+    else:
+        group, cell, suffix = None, None, case
+
+    config_path = os.path.join(dirname_results, case)
+    with open(os.path.join(config_path, "config_backup.pickle"), 'rb') as f:
+        config = pickle.load(f)
+
+    m_index = config['runtime']['m_index']
+
+    # n_genes = len(m_index)
+    # n_organisms = config['runtime']['n_organisms']
+
+    dump = {}
+    for folder in 'dump', 'best':
+        dump[folder] = {}
+        for key in 'genes', 'state', 'status', 'loss':
+            filename = os.path.join(config_path, folder, key)
+            if os.path.isfile(filename):
+                dump[folder][key] = np.fromfile(filename)
+
+    filename = os.path.join(config_path, 'sol_best.csv')
+    if os.path.isfile(filename):
+        sol_best = pd.read_csv(filename, index_col=[0, 1]).iloc[:, -1]
+    else:
+        sol_best = None
+
+    phenotype_best = {}
+
+    for exp_cond_name in config['experimental_conditions']:
+
+        if exp_cond_name == 'common':
+            continue
+
+        filename = os.path.join(config_path, "phenotype", f"phenotype_{exp_cond_name}.csv")
+        if os.path.isfile(filename):
+            try:
+                phenotype_best[exp_cond_name] = pd.read_csv(filename)
+            except pd.errors.EmptyDataError as e:
+                print(f'{filename} is empty')
+                continue
+
+    filename = os.path.join(config_path, 'state_best.csv')
+    state_best = pd.read_csv(filename, index_col=0)
+
+    results = dict(trio=(group, cell, suffix),
+                   config=config,
+                   dump=dump,
+                   sol_best=sol_best,
+                   phenotype_best=phenotype_best,
+                   state_best=state_best)
+
+    return results
