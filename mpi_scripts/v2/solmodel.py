@@ -40,6 +40,13 @@ class SolModel(Solution):
             if not hasattr(self, attr):
                 raise AttributeError(attr)
 
+        self._status = None
+        self.__status_valid = 2
+
+    @property
+    def status(self):
+        return self._status
+
     def update(self):
 
         self['phenotype'] = {}
@@ -62,8 +69,10 @@ class SolModel(Solution):
             pred = self.model.run(S, C, stim_protocol=stim_protocol,
                                   **self.config)
 
-            self['status'] = self.model.status
-            if self['status'] != 2:
+            self._status = self.model.status
+            if self._status != self.__status_valid:
+                self._x = genes.values
+                self._y = np.nan
                 return
 
             update_genes_from_state(genes=genes, state=self['state'],
@@ -79,6 +88,8 @@ class SolModel(Solution):
         if not self.is_updated():
             return False
         else:
-            flag_valid = True
-            flag_valid &= all(not np.any(np.isnan(p)) for p in self['phenotype'].values())
-            return flag_valid
+            flag_valid = self._status == self.__status_valid and np.isfinite(self._y)
+            if 'phenotype' not in self:  # solution was gathered via MPI
+                return flag_valid
+            else:
+                return flag_valid and all(not np.any(np.isnan(p)) for p in self['phenotype'].values())

@@ -24,6 +24,7 @@ def prepare_config(config_filename):
     config['runtime'] = dict()
 
     config['runtime']['config_path'] = config_path
+    config['runtime']['filename_so_abs'] = os.path.normpath(os.path.join(config_path, config['filename_so']))
 
     config['runtime']['sha'] = git.Repo(search_parent_directories=True).head.commit.hexsha
 
@@ -72,27 +73,6 @@ def prepare_config(config_filename):
 
     config['runtime']['states_initial'] = states_initial
 
-    output_folder_name = os.path.normpath(os.path.join(config_path, config.get("output_folder_name", "./output")))
-    time_suffix = datetime.now().strftime("%y%m%d_%H%M%S")
-    output_folder_name = os.path.join(output_folder_name, time_suffix)
-    # print(f"# output_folder_name was set to {output_folder_name}", flush=True)
-    config['runtime']['time_suffix'] = time_suffix
-    config['runtime']["output_folder_name"] = output_folder_name
-
-    config['runtime']['output'] = dict(output_folder_name_phenotype=os.path.join(output_folder_name, "phenotype"),
-                                       dump_filename=os.path.join(output_folder_name, "dump.bin"),
-                                       dump_last_filename=os.path.join(output_folder_name, "dump_last.npy"),
-                                       dump_elite_filename=os.path.join(output_folder_name, "dump_elite.npy"),
-                                       backup_filename=os.path.join(output_folder_name, "backup.pickle"),
-                                       output_folder_name_mpi=os.path.join(output_folder_name, "mpi"),
-                                       config_backup_filename=os.path.join(output_folder_name, "config_backup.pickle"),
-                                       log_filename=os.path.join(output_folder_name, "runtime.log"),
-                                       organism_best_filename=os.path.join(output_folder_name, "organism_best.pickle"),
-                                       genes_best_filename=os.path.join(output_folder_name, "genes_best.csv"),
-                                       phenotypes_plot_filename=os.path.join(output_folder_name,
-                                                                             "phenotypes_plot_filename.png"))
-
-
     bounds, gammas, mask_multipliers = generate_bounds_gammas_mask_multipliers(config['runtime']['genes_dict'])
     config['runtime']['bounds'] = bounds
     config['runtime']['gammas'] = gammas
@@ -105,46 +85,85 @@ def prepare_config(config_filename):
     return config
 
 
-def touch_output(config):
-    for folder in config['runtime']['output']['output_folder_name_phenotype'],:
-        os.makedirs(folder, exist_ok=True)
-    with open(config['runtime']['output']['dump_filename'], "wb") as f:  # create or clear and close
-        pass
-    with open(config['runtime']['output']['dump_elite_filename'], "wb") as f:  # create or clear and close
-        pass
-    with open(config['runtime']['output']['log_filename'], "w") as file_log:
-        file_log.write(f"# SIZE = {config['runtime']['comm_size']}\n")
-        file_log.write(f"# commit {config['runtime']['sha']}\n")
+def update_output_dict(config) -> dict:
+
+    folder = os.path.normpath(os.path.join(config['runtime']['config_path'],
+                                                       config.get("output_folder_name", "./results")))
+    time_suffix = datetime.now().strftime("%y%m%d_%H%M%S")
+    folder = os.path.join(folder, time_suffix)
+    config['runtime']['time_suffix'] = time_suffix
+
+    config['runtime']['output'] = dict(folder=folder,
+                                       folder_phenotype=os.path.join(folder, "phenotype"),
+                                       folder_dump=os.path.join(folder, "dump"),
+                                       folder_best=os.path.join(folder, "best")
+                                       # population_backup=os.path.join(output_folder_name, "backup.pickle"),
+                                       # log=os.path.join(output_folder_name, "runtime.log"),
+                                       )
 
 
-def save_epoch(population, kw_output):
+def backup_config(config):
+    filename = os.path.join(config['runtime']['output']['folder'], "config_backup.pickle")
+    with open(filename, "wb") as f:
+        pickle.dump(config, f)
+    config['runtime']['output']['config_backup'] = filename
 
-    dump_filename = kw_output['dump_filename']
-    dump_last_filename = kw_output['dump_last_filename']
-    dump_elite_filename = kw_output['dump_elite_filename']
-    backup_filename = kw_output['backup_filename']
-    log_filename = kw_output['log_filename']
 
-    population = sorted(population, key=lambda organism: organism['fitness'], reverse=True)
+def dump_dict(dct, folder):
 
-    genes = np.array([organism['genes'] for organism in population])  # TODO: take this from buffers
-    fitness = np.array([organism['fitness'] for organism in population])
+    if not os.path.isdir(folder):
+        os.mkdir(folder)
 
-    dump_current = np.hstack([genes, fitness[:, None]])
+    for key, value in dct.items():
 
-    with open(dump_filename, 'ba+') as file_dump:
-        dump_current.astype(np.half).tofile(file_dump)
+        filename = os.path.join(folder, key)
+        if not os.path.isfile(filename):
+            with open(filename, "wb") as _:
+                pass
 
-    np.save(dump_last_filename, dump_current)
+        with open(filename, 'ba+') as f:
+            np.asarray(value).tofile(f)
 
-    with open(backup_filename, "wb") as file_backup:
-        pickle.dump(population, file_backup)
 
-    with open(log_filename, "a") as file_log:
-        s = np.array2string(dump_current[0, :],
-                            formatter={'float_kind': lambda x: "%.3f" % x},
-                            max_line_width=1000)[1:-1] + "\n"
-        file_log.write(s)
+def dump_epoch(recvbuf_dict, config):
+    dump_dict(recvbuf_dict, config['runtime']['output']['folder_dump'])
 
-    with open(dump_elite_filename, 'ba+') as f:
-        dump_current[0, :].tofile(f)
+
+def save_sol_best(sol_best, config):
+
+    output_dict = config['runtime']['output']
+
+    genes = pd.Series(sol_best.x, index=config['runtime']['m_index'])
+    filename = os.path.join(output_dict['folder'], 'sol_best.csv')
+    genes.to_csv(filename)
+
+    for exp_cond_name in config['experimental_conditions']:
+        if exp_cond_name == 'common':
+            continue
+
+        folder_phenotype = config['runtime']['output']['folder_phenotype']
+        if not os.path.isdir(folder_phenotype):
+            os.mkdir(folder_phenotype)
+
+        df = sol_best['phenotype'][exp_cond_name]
+
+        # Rewrite last epoch
+        filename_phenotype_save_csv = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}.csv")
+        df.to_csv(filename_phenotype_save_csv, index=False)
+
+        # Append last epoch to previous
+        filename_phenotype_save_binary = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}")
+        if not os.path.isfile(filename_phenotype_save_binary):
+            with open(filename_phenotype_save_binary, "wb") as f:
+                pass
+
+        with open(filename_phenotype_save_binary, 'ba+') as f:
+            df.values.astype(np.float32).tofile(f)
+
+    d = dict(genes=sol_best.x,
+             state=sol_best['state'].values,
+             loss=sol_best.y,
+             status=sol_best.status)
+
+    folder_best = output_dict['folder_best']
+    dump_dict(d, folder_best)

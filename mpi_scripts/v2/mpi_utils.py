@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def allocate_buffers(config, comm):
+def allocate_recvbuf(config, comm):
 
     comm_size = comm.Get_size()
 
@@ -18,33 +18,51 @@ def allocate_buffers(config, comm):
 
     recvbuf_genes = np.empty([comm_size, n_orgsnisms_per_process * genes_size])
     recvbuf_state = np.empty([comm_size, n_orgsnisms_per_process * state_size])
-    recvbuf_fitness = np.empty([comm_size, n_orgsnisms_per_process * 1])
+    recvbuf_loss = np.empty([comm_size, n_orgsnisms_per_process * 1])
+    recvbuf_status = np.empty([comm_size, n_orgsnisms_per_process * 1], dtype=int)
 
-    return recvbuf_genes, recvbuf_state, recvbuf_fitness
+    recvbuf_dict = dict(genes=recvbuf_genes,
+                        state=recvbuf_state,
+                        loss=recvbuf_loss,
+                        status=recvbuf_status)
+
+    return recvbuf_dict
 
 
-def allgather(batch, config, SolModel,
-              recvbuf_genes, recvbuf_state, recvbuf_fitness, comm):
+def allgather(batch, recvbuf_dict, comm):
 
     sendbuf_genes = np.concatenate([sol.x for sol in batch])
     sendbuf_state = np.concatenate([sol['state'].values.flatten() for sol in batch])
-    sendbuf_fitness = np.array([sol.y for sol in batch])
-    assert(not np.any(np.isnan(sendbuf_fitness)))
+    sendbuf_loss = np.array([sol.y for sol in batch])
+    sendbuf_status = np.array([sol.status for sol in batch])
 
-    comm.Allgatherv(sendbuf_genes, recvbuf_genes)
-    comm.Allgatherv(sendbuf_state, recvbuf_state)
-    comm.Allgatherv(sendbuf_fitness, recvbuf_fitness)
+    comm.Allgatherv(sendbuf_genes,  recvbuf_dict['genes'])
+    comm.Allgatherv(sendbuf_state,  recvbuf_dict['state'])
+    comm.Allgatherv(sendbuf_loss,   recvbuf_dict['loss'])
+    comm.Allgatherv(sendbuf_status, recvbuf_dict['status'])
+
+
+def population_from_recvbuf(recvbuf_dict, SolModel, config):
+
+    recvbuf_genes = recvbuf_dict['genes']
+    recvbuf_state = recvbuf_dict['state']
+    recvbuf_loss = recvbuf_dict['loss']
+    recvbuf_status = recvbuf_dict['status']
 
     recvbuf_genes = recvbuf_genes.reshape((config['runtime']['n_organisms'], config['runtime']['genes_size']))
     recvbuf_state = recvbuf_state.reshape((config['runtime']['n_organisms'], *config['runtime']['state_shape']))
-    recvbuf_fitness = recvbuf_fitness.flatten()
+    recvbuf_loss = recvbuf_loss.flatten()
+    recvbuf_status = recvbuf_status.flatten()
 
     population = []
-    columns_state = [exp_cond_name for exp_cond_name in config['experimental_conditions'] if exp_cond_name != 'common']
+    columns_state = [exp_cond_name for exp_cond_name in config['experimental_conditions']
+                     if exp_cond_name != 'common']
     for i in range(config['runtime']['n_organisms']):
-        state = pd.DataFrame(recvbuf_state[i], columns_state)
+        state = pd.DataFrame(recvbuf_state[i], columns=columns_state,
+                             index=config['runtime']['legend']['states'].index)
         sol = SolModel(recvbuf_genes[i], state=state)
-        sol._y = recvbuf_fitness[i]
+        sol._y = recvbuf_loss[i]
+        sol._status = recvbuf_status[i]
         population.append(sol)
 
     return population
