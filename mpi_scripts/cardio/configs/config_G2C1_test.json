@@ -40,16 +40,16 @@
         },
         "PNa": {
           "bounds": [
-            0.1,
-            10
+            0.5,
+            2
           ],
           "gamma": 0.015,
           "is_multiplier": true
         },
         "gCaL": {
           "bounds": [
-            0.1,
-            10
+            0.5,
+            2
           ],
           "gamma": 0.015,
           "is_multiplier": true
@@ -113,93 +113,6 @@
       "filename_phenotype": "../../../data/voigt/10kHz/G2/C1/phenotype_1032.csv",
       "filename_state": "../../../data/koivumaki/fluo/states/state_1000.txt",
       "filename_stim_protocol": "../../../data/voigt/10kHz/G2/C1/protocol_1032.csv"
-    },
-    "516": {
-      "params": {
-        "STIM_PERIOD": 0.516,
-        "Nai": {
-          "bounds": [
-            4,
-            16
-          ],
-          "gamma": 0.015
-        },
-        "Ki": {
-          "bounds": [
-            100,
-            160
-          ],
-          "gamma": 0.015
-        },
-        "CaSR": {
-          "bounds": [
-            0.06,
-            6
-          ],
-          "gamma": 0.015
-        }
-      },
-      "filename_phenotype": "../../../data/voigt/10kHz/G2/C1/phenotype_516.csv",
-      "filename_state": "../../../data/koivumaki/fluo/states/state_500.txt",
-      "filename_stim_protocol": "../../../data/voigt/10kHz/G2/C1/protocol_516.csv"
-    },
-    "344": {
-      "params": {
-        "STIM_PERIOD": 0.344,
-        "Nai": {
-          "bounds": [
-            4,
-            16
-          ],
-          "gamma": 0.015
-        },
-        "Ki": {
-          "bounds": [
-            100,
-            160
-          ],
-          "gamma": 0.015
-        },
-        "CaSR": {
-          "bounds": [
-            0.06,
-            6
-          ],
-          "gamma": 0.015
-        }
-      },
-      "filename_phenotype": "../../../data/voigt/10kHz/G2/C1/phenotype_344.csv",
-      "filename_state": "../../../data/koivumaki/fluo/states/state_500.txt",
-      "filename_stim_protocol": "../../../data/voigt/10kHz/G2/C1/protocol_344.csv"
-    },
-    "258": {
-      "params": {
-        "STIM_PERIOD": 0.258,
-        "Nai": {
-          "bounds": [
-            4,
-            16
-          ],
-          "gamma": 0.015
-        },
-        "Ki": {
-          "bounds": [
-            100,
-            160
-          ],
-          "gamma": 0.015
-        },
-        "CaSR": {
-          "bounds": [
-            0.06,
-            6
-          ],
-          "gamma": 0.015
-        }
-      },
-      "filename_phenotype": "../../../data/voigt/10kHz/G2/C1/phenotype_258.csv",
-      "filename_state": "../../../data/koivumaki/fluo/states/state_500.txt",
-      "filename_stim_protocol": "../../../data/voigt/10kHz/G2/C1/protocol_258.csv"
     }
   }
 }

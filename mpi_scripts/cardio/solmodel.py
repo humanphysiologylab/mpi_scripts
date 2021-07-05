@@ -6,30 +6,7 @@ from pypoptim.algorythm import Solution
 from gene_utils import update_S_C_from_genes, \
                        update_genes_from_state
 
-from model_utils import calculate_n_samples_per_stim
-
-
-def calculate_loss(pred, config):
-    loss = 0
-
-    columns_control = ['V']
-    columns_model = ['V']
-
-    for exp_cond_name, exp_cond in config['experimental_conditions'].items():
-
-        if exp_cond_name == 'common':
-            continue
-
-        n_samples_per_stim = calculate_n_samples_per_stim(exp_cond_name, config)
-
-        phenotype_control = exp_cond['phenotype'][columns_control][-n_samples_per_stim - 1:]
-        phenotype_model = pred['phenotype'][exp_cond_name][columns_model][-n_samples_per_stim - 1:]
-
-        phenotype_model = phenotype_model[:len(phenotype_control)]
-
-        loss += float(np.sqrt(np.mean((phenotype_control.values - phenotype_model.values) ** 2)))
-
-    return loss
+from loss_utils import calculate_loss
 
 
 class SolModel(Solution):
