@@ -1,5 +1,6 @@
 import sys
 import os
+import subprocess
 
 from mpi4py import MPI
 from tqdm.auto import tqdm
@@ -41,6 +42,16 @@ def mpi_script(config_filename):
         update_output_dict(config)
         os.makedirs(config['runtime']['output']['folder'])
         print(f"# folder: {config['runtime']['output']['folder']}", flush=True)
+
+        filename_so_abs = os.path.abspath(config['runtime']['filename_so_abs'])
+        dirname, _ = os.path.split(filename_so_abs)
+        popenargs = ['make', 'clean', '-C', dirname]
+        output = subprocess.check_output(popenargs)
+        print(output.decode())
+
+        popenargs = ['make', '-C', dirname]
+        output = subprocess.check_output(popenargs)
+        print(output.decode())
 
     config = comm.bcast(config, root=0)
 
