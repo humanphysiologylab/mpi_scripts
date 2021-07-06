@@ -55,7 +55,7 @@ def prepare_config(config_filename):
         exp_cond['filename_phenotype'] = filename_phenotype
 
         filename_state = os.path.normpath(os.path.join(config_path, exp_cond['filename_state']))
-        exp_cond['initial_state'] = pd.Series(np.loadtxt(filename_state), index=legend['states'].index)
+        exp_cond['initial_state'] = pd.read_csv(filename_state, index_col=0).iloc[:, -1]
         exp_cond['filename_state'] = filename_state
 
         column_stim_protocol = config.get('column_stim_protocol', None)

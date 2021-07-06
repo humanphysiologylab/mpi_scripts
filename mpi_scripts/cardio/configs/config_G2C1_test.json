@@ -82,7 +82,7 @@
         }
       },
       "filename_phenotype": "../../../data/voigt/10kHz/G2/C1/phenotype_2064.csv",
-      "filename_state": "../../../data/koivumaki/fluo/states/state_2000.txt",
+      "filename_state": "../../../data/koivumaki/fluo/states/state_2000.csv",
       "filename_stim_protocol": "../../../data/voigt/10kHz/G2/C1/protocol_2064.csv"
     },
     "1032": {
@@ -111,7 +111,7 @@
         }
       },
       "filename_phenotype": "../../../data/voigt/10kHz/G2/C1/phenotype_1032.csv",
-      "filename_state": "../../../data/koivumaki/fluo/states/state_1000.txt",
+      "filename_state": "../../../data/koivumaki/fluo/states/state_1000.csv",
       "filename_stim_protocol": "../../../data/voigt/10kHz/G2/C1/protocol_1032.csv"
     }
   }
