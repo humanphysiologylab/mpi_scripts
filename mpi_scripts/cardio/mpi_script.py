@@ -10,7 +10,7 @@ from pypoptim.model import CardiacModel
 from solmodel import SolModel
 from pypoptim.algorythm.ga import GA
 
-from pypoptim.helpers import argmax
+from pypoptim.helpers import argmin
 from pypoptim import Timer
 
 from io_utils import prepare_config, update_output_dict, backup_config, dump_epoch, save_sol_best
@@ -70,11 +70,13 @@ def mpi_script(config_filename):
     timer = Timer()
 
     if comm_rank == 0:
-        pbar = tqdm(total=config['n_generations'])
+        pbar = tqdm(total=config['n_generations'], ascii=True)
 
     for epoch in range(config['n_generations']):
 
         timer.start('calc')
+        if comm_rank == 0:
+            pbar.set_postfix_str("CALC")
         for i, sol in enumerate(batch):
             sol.update()
             if not sol.is_valid():
@@ -82,12 +84,16 @@ def mpi_script(config_filename):
         timer.end('calc')
 
         timer.start('gather')
+        if comm_rank == 0:
+            pbar.set_postfix_str("GATHER")
         allgather(batch, recvbuf_dict, comm)
         population = population_from_recvbuf(recvbuf_dict, SolModel, config)
         timer.end('gather')
 
         timer.start('save')
-        index_best = argmax(population)
+        if comm_rank == 0:
+            pbar.set_postfix_str("SAVE")
+        index_best = argmin(population)
         comm_rank_best = index_best // config['runtime']['n_orgsnisms_per_process']
         index_best_batch = index_best % config['runtime']['n_orgsnisms_per_process']
 
@@ -100,6 +106,8 @@ def mpi_script(config_filename):
         timer.end('save')
 
         timer.start('gene')
+        if comm_rank == 0:
+            pbar.set_postfix_str("GENE")
 
         population = ga_optim.filter_population(population)
         # n_invalids = config['runtime']['n_organisms'] - len(population)
@@ -108,9 +116,8 @@ def mpi_script(config_filename):
 
         if len(population) <= 3:
             if comm_rank == 0:
-                print(f"# Not enough organisms for genetic operations left: {len(population)}")
-                print("# exit")
-            return
+                msg = f"# Not enough organisms for genetic operations left: {len(population)}"
+                raise RuntimeError(msg)
 
         elites_all = population[:config['n_elites']]  # len may be less than config['n_elites'] due to invalids
         elites_batch = elites_all[comm_rank::comm_size]  # elites_batch may be empty
@@ -129,8 +136,13 @@ def mpi_script(config_filename):
                 print(timer.report(), file=f)
                 print(f'# epoch: {epoch}', file=f)
             pbar.update(1)
+            pbar.refresh()
 
         timer.clear()
+
+    if comm_rank == 0:
+        pbar.set_postfix_str("DONE")
+        pbar.refresh()
 
 
 if __name__ == '__main__':
