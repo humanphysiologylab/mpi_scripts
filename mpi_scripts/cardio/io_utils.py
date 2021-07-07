@@ -170,7 +170,7 @@ def save_sol_best(sol_best, config):
     dump_dict(d, folder_best)
 
 
-def collect_results(case, dirname_results, voigt=False):
+def collect_results(case, dirname_results, dump_keys=None, voigt=False):
 
     if voigt:
         group, cell, suffix = case.split('/')
@@ -187,8 +187,11 @@ def collect_results(case, dirname_results, voigt=False):
     # n_genes = len(m_index)
     # n_organisms = config['runtime']['n_organisms']
 
+    if dump_keys is None:
+        dump_keys = ['dump', 'best']
+
     dump = {}
-    for folder in 'dump', 'best':
+    for folder in dump_keys:
         dump[folder] = {}
         for key in 'genes', 'state', 'status', 'loss':
             filename = os.path.join(config_path, folder, key)

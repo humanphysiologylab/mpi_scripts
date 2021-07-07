@@ -172,25 +172,17 @@ def save_sol_best(sol_best, config):
     dump_dict(d, folder_best)
 
 
-def collect_results(case, dirname_results, voigt=False):
-
-    if voigt:
-        group, cell, suffix = case.split('/')
-        group, cell = int(group[-1]), int(cell[-1])
-    else:
-        group, cell, suffix = None, None, case
+def collect_results(case, dirname_results, dump_keys=None):
 
     config_path = os.path.join(dirname_results, case)
     with open(os.path.join(config_path, "config_backup.pickle"), 'rb') as f:
         config = pickle.load(f)
 
-    m_index = config['runtime']['m_index']
-
-    # n_genes = len(m_index)
-    # n_organisms = config['runtime']['n_organisms']
+    if dump_keys is None:
+        dump_keys = ['dump', 'best']
 
     dump = {}
-    for folder in 'dump', 'best':
+    for folder in dump_keys:
         dump[folder] = {}
         for key in 'genes', 'state', 'status', 'loss':
             filename = os.path.join(config_path, folder, key)
@@ -221,8 +213,7 @@ def collect_results(case, dirname_results, voigt=False):
     filename = os.path.join(config_path, 'state_best.csv')
     state_best = pd.read_csv(filename, index_col=0)
 
-    results = dict(trio=(group, cell, suffix),
-                   config=config,
+    results = dict(config=config,
                    dump=dump,
                    sol_best=sol_best,
                    phenotype_best=phenotype_best,
