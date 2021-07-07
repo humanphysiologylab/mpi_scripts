@@ -1,0 +1,321 @@
+{
+    "n_organisms": 4096,
+    "n_elites": 128,
+    "n_generations": 1000,
+
+    "output_folder_name": "../../results/gattoni/bernus2012_roe2018/",
+
+    # model
+    "filename_so": "../../src/model_ctypes/_gattoni/gattoni.so",
+    "filename_legend_states": "../../src/model_ctypes/_gattoni/legend_states_6Hz.csv",
+    "filename_legend_constants": "../../src/model_ctypes/_gattoni/legend_constants_6Hz.csv",
+
+    # needed for ctypes
+    "t_run": 9000, # or "n_beats": 9
+    "t_sampling": 1,
+    "tol": 1e-4,
+    "stim_period_legend_name": "stim_period",
+
+    "loss": "AP_CaT_restcurves",
+
+    "experimental_conditions": {
+        "common": {
+            "params": {
+
+                "stim_duration": 2.0,
+                "stim_amplitude": -0.002,
+
+                "g_Na": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "J_L": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "J_R": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_t": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_ss": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_K1": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_B_Na": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_B_K": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "i_NaK_max": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_NCX": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_SERCA": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_pCa": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_CaB": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_SRl": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "g_D": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                },
+                "K_RyR": {
+                    "bounds": [0.1, 10],
+                    "gamma": 0.015,
+                    "is_multiplier": true
+                }
+
+                # Not Used
+                # "B_TRPN": {
+                #     "bounds": [0.1, 10],
+                #     "gamma": 0.015,
+                #     "is_multiplier": true
+                # },
+                # "B_CMDN": {
+                #     "bounds": [0.1, 10],
+                #     "gamma": 0.015,
+                #     "is_multiplier": true
+                # },
+                # "g_f": {
+                #     "bounds": [0.1, 10],
+                #     "gamma": 0.015,
+                #     "is_multiplier": true
+                # }
+
+            }
+        },
+
+        "2000": {
+            "type": ["CaT"],
+            "params": {
+                "stim_period": 2000,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.15
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 4],
+                    "gamma": 0.015
+                }
+            },
+            "filename_state": "../../data/gattoni/original/states/state_167.csv",
+            "CaT_params": {
+                "DCa": {"mean": 0.106, "std": 0.006},  # uM
+                "CTA": {"mean": 1.246, "std": 0.204},  # uM
+                "CT50": {"mean": 99, "std": 8} # ms
+            }
+        },
+
+        "1000": {
+            "type": ["AP", "CaT"],
+            "params": {
+                "stim_period": 1000,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.15
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 4],
+                    "gamma": 0.015
+                }
+            },
+            "filename_AP": "../../data/nesterova/AP_Bernus2012/1Hz.csv",
+            # "filename_CaT": "../../data/nesterova/CaT_Roe_2018/CaT_Roe_CaT_uM_1Hz.csv",
+            "CaT_params": {
+                "DCa": {"mean": 0.103, "std": 0.006},  # uM
+                "CTA": {"mean": 0.862, "std": 0.112},  # uM
+                "CT50": {"mean": 95, "std": 7} # ms
+            },
+            "filename_state": "../../data/gattoni/original/states/state_167.csv"
+        },
+
+        "500": {
+            "type": ["AP", "CaT"],
+            "params": {
+                "stim_period": 500,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.15
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 4],
+                    "gamma": 0.015
+                }
+            },
+            "filename_AP": "../../data/nesterova/AP_Bernus2012/2Hz.csv",
+            "filename_state": "../../data/gattoni/original/states/state_167.csv",
+            "CaT_params": {
+                "DCa": {"mean": 0.119, "std": 0.006},  # uM
+                "CTA": {"mean": 0.717, "std": 0.092},  # uM
+                "CT50": {"mean": 84, "std": 6} # ms
+            }
+        },
+
+        "250": {
+            "type": ["CaT"],
+            "params": {
+                "stim_period": 250,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.15
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 4],
+                    "gamma": 0.015
+                }
+            },
+            "filename_state": "../../data/gattoni/original/states/state_167.csv",
+            "CaT_params": {
+                "DCa": {"mean": 0.184, "std": 0.019},  # uM
+                "CTA": {"mean": 0.883, "std": 0.133},  # uM
+                "CT50": {"mean": 68, "std": 4} # ms
+            }
+        },
+
+        "200": {
+            "type": ["AP"],
+            "params": {
+                "stim_period": 200,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.15
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 4],
+                    "gamma": 0.015
+                }
+            },
+            "filename_AP": "../../data/nesterova/AP_Bernus2012/5Hz.csv",
+            "filename_state": "../../data/gattoni/original/states/state_167.csv"
+        },
+
+        "167": {
+            "type": ["CaT"],
+            "params": {
+                "stim_period": 167,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.15
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 4],
+                    "gamma": 0.015
+                }
+            },
+            # "filename_CaT": "../../data/nesterova/CaT_Roe_2018/CaT_Roe_CaT_uM_6Hz.csv",
+            "filename_state": "../../data/gattoni/original/states/state_167.csv",
+            "CaT_params": {
+                "DCa": {"mean": 0.294, "std": 0.043},  # uM
+                "CTA": {"mean": 1.104, "std": 0.154},  # uM
+                "CT50": {"mean": 57, "std": 3} # ms
+            }
+        },
+
+        "143": {
+            "type": ["AP"],
+            "params": {
+                "stim_period": 143,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.15
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 4],
+                    "gamma": 0.015
+                }
+            },
+            "filename_AP": "../../data/nesterova/AP_Bernus2012/7Hz.csv",
+            "filename_state": "../../data/gattoni/original/states/state_167.csv"
+        },
+
+        "111": {
+            "type": ["AP"],
+            "params": {
+                "stim_period": 111,
+                "Na_i": {
+                    "bounds": [4, 16],
+                    "gamma": 0.015
+                },
+                "K_i": {
+                    "bounds": [100, 160],
+                    "gamma": 0.15
+                },
+                "Ca_SR": {
+                    "bounds": [0.06, 4],
+                    "gamma": 0.015
+                }
+            },
+            "filename_AP": "../../data/nesterova/AP_Bernus2012/9Hz.csv",
+            "filename_state": "../../data/gattoni/original/states/state_167.csv"
+        }
+    }
+}

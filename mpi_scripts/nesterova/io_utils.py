@@ -50,11 +50,18 @@ def prepare_config(config_filename):
         if exp_cond_name == 'common':
             continue
 
-        for name in 'AP', 'CaT':
-            if name in exp_cond['type']:
-                filename = os.path.normpath(os.path.join(config_path, exp_cond[f'filename_{name}']))
-                exp_cond[name] = pd.read_csv(filename)
-                exp_cond[f'filename_{name}'] = filename
+        if config['loss'] == "AP_CaT_restcurves":
+            if 'AP' in exp_cond['type']:
+                filename = os.path.normpath(os.path.join(config_path, exp_cond['filename_AP']))
+                exp_cond['AP'] = pd.read_csv(filename)
+            if 'CaT' in exp_cond['type']:
+                ...
+        else:
+            for name in 'AP', 'CaT':
+                if name in exp_cond['type']:
+                    filename = os.path.normpath(os.path.join(config_path, exp_cond[f'filename_{name}']))
+                    exp_cond[name] = pd.read_csv(filename)
+                    # exp_cond[f'filename_{name}'] = filename
 
         filename_state = os.path.normpath(os.path.join(config_path, exp_cond['filename_state']))
         exp_cond['initial_state'] = pd.read_csv(filename_state, index_col=0).iloc[:, -1]

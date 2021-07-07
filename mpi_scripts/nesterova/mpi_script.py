@@ -1,6 +1,8 @@
-import sys
+#!/usr/bin/env python
+
 import os
-import subprocess
+import logging
+import argparse
 
 from mpi4py import MPI
 from tqdm.auto import tqdm
@@ -42,16 +44,6 @@ def mpi_script(config_filename):
         update_output_dict(config)
         os.makedirs(config['runtime']['output']['folder'])
         print(f"# folder: {config['runtime']['output']['folder']}", flush=True)
-
-        # filename_so_abs = os.path.abspath(config['runtime']['filename_so_abs'])
-        # dirname, _ = os.path.split(filename_so_abs)
-        # popenargs = ['make', 'clean', '-C', dirname]
-        # output = subprocess.check_output(popenargs)
-        # print(output.decode())
-        #
-        # popenargs = ['make', '-C', dirname]
-        # output = subprocess.check_output(popenargs)
-        # print(output.decode())
 
     config = comm.bcast(config, root=0)
 
@@ -157,10 +149,22 @@ def mpi_script(config_filename):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        if MPI.COMM_WORLD.Get_rank() == 0:
-            print(f"Usage: mpiexec -n 2 python {sys.argv[0]} config.json")
-        exit()
 
-    config_filename = sys.argv[1]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config',
+                        type=str,
+                        help='configuration file')
+    parser.add_argument("-v", "--verbosity",
+                        type=str,
+                        help="logging level")
+
+    args = parser.parse_args()
+
+    config_filename = args.config
+    logging_level = args.verbosity
+    level = dict(INFO=logging.INFO,
+                 DEBUG=logging.DEBUG).get(logging_level, logging.WARNING)
+    logging.basicConfig(level=level)
+    logger = logging.getLogger(__name__)
+
     mpi_script(config_filename)
