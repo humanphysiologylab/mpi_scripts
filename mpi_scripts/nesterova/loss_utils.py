@@ -76,12 +76,12 @@ def calculate_loss_AP_CaT_restcurves(sol, exp_cond_name, config):
     loss_ap = 0
     for name in exp_cond['type']:
         if name == 'CaT':
-            cat_params = exp_cond['CaT_params']
-            cat_model = sol['phenotype'][exp_cond_name]['Ca_i'][-n_samples_per_stim:]
+            cat_params = exp_cond['CaT_params']  # uM
+            cat_model = sol['phenotype'][exp_cond_name]['Ca_i'][-n_samples_per_stim:] * 1000  # mM -> uM
             DCa_control = cat_params['DCa']['mean']
             CTA_control = cat_params['CTA']['mean']
-            DCa_model = calculate_DCa(cat_model) * 1000
-            CTA_model = calculate_CTA(cat_model) * 1000
+            DCa_model = calculate_DCa(cat_model)
+            CTA_model = calculate_CTA(cat_model)
             loss_cat = 10 * np.abs(DCa_control - DCa_model) \
                        + np.abs(CTA_control - CTA_model)
             # explanation: DCa ~ 10 times smaller than CTA
