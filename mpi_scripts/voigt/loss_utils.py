@@ -4,6 +4,9 @@ from pypoptim.helpers import calculate_mean_abs_noise, autoscaling
 from pypoptim.losses import calculate_RMSE_balanced, RMSE, calculate_RMSE_weightened
 from model_utils import calculate_n_samples_per_stim
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 def calculate_composite_RMSE_V_CaT(x, y):
     # x -- model, y -- experiment
@@ -145,46 +148,52 @@ def calculate_loss(sol, config):
     columns_control = config.get("columns_control", ["V"])
     columns_model = config.get("columns_model", ["V"])
 
+    loss = 0
+    loss_L2 = 0
+
+    if config.get('ridge_regression', False):
+        scalers = sol.x[config['runtime']['mask_multipliers']]
+        loss_L2 = np.sum((np.log10(scalers))**2) / 10
+
     if config['loss'] == 'V_CaT_shared':
         loss = calculate_V_CaT_shared(sol, config)
-        return loss
 
-    loss = 0
+    else:
 
-    for exp_cond_name, exp_cond in config['experimental_conditions'].items():
+        for exp_cond_name, exp_cond in config['experimental_conditions'].items():
 
-        if exp_cond_name == 'common':
-            continue
+            if exp_cond_name == 'common':
+                continue
 
-        n_samples_per_stim = calculate_n_samples_per_stim(exp_cond_name, config)
+            n_samples_per_stim = calculate_n_samples_per_stim(exp_cond_name, config)
 
-        phenotype_control = exp_cond['phenotype'][columns_control][-n_samples_per_stim - 1:]
-        phenotype_model   = sol['phenotype'][exp_cond_name][columns_model][-n_samples_per_stim - 1:]
+            phenotype_control = exp_cond['phenotype'][columns_control][-n_samples_per_stim - 1:]
+            phenotype_model   = sol['phenotype'][exp_cond_name][columns_model][-n_samples_per_stim - 1:]
 
-        phenotype_model   = phenotype_model[:len(phenotype_control)]
+            phenotype_model   = phenotype_model[:len(phenotype_control)]
 
-        if config.get('align_depolarization', False):
-            phenotype_control = align_depolarization(phenotype_model, phenotype_control)
+            if config.get('align_depolarization', False):
+                phenotype_control = align_depolarization(phenotype_model, phenotype_control)
 
-        if config['loss'] == 'RMSE':
-            loss += RMSE(phenotype_control, phenotype_model)
+            if config['loss'] == 'RMSE':
+                loss += RMSE(phenotype_control, phenotype_model)
 
-        elif config['loss'] == 'RMSE_balanced':
-            loss += calculate_RMSE_balanced(phenotype_control, phenotype_model)
+            elif config['loss'] == 'RMSE_balanced':
+                loss += calculate_RMSE_balanced(phenotype_control, phenotype_model)
 
-        elif config['loss'] == 'RMSE_weightened':
-            loss += _calculate_RMSE_weightened(phenotype_control, phenotype_model)
+            elif config['loss'] == 'RMSE_weightened':
+                loss += _calculate_RMSE_weightened(phenotype_control, phenotype_model)
 
-        elif config['loss'] == 'composite_RMSE_V_CaT':
-            loss += calculate_composite_RMSE_V_CaT(phenotype_control.to_numpy(),
-                                                   phenotype_model.to_numpy())
+            elif config['loss'] == 'composite_RMSE_V_CaT':
+                loss += calculate_composite_RMSE_V_CaT(phenotype_control.to_numpy(),
+                                                       phenotype_model.to_numpy())
 
-        elif config['loss'] == 'composite_RMSE_V_CaT_noisy':
-            loss += composite_RMSE_V_CaT_noisy(phenotype_model, phenotype_control)
+            elif config['loss'] == 'composite_RMSE_V_CaT_noisy':
+                loss += composite_RMSE_V_CaT_noisy(phenotype_model, phenotype_control)
 
-        else:
-            raise ValueError(f'Unknown loss {config["loss"]}')
+            else:
+                raise ValueError(f'Unknown loss {config["loss"]}')
+
+    logger.info(f'loss = {loss}; loss_L2 = {loss_L2}')
 
     return loss
-
-

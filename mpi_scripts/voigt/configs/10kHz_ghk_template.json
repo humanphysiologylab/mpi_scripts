@@ -11,6 +11,7 @@
     "mutation_rate": 1.0,
     "gamma": 1.0,
     "loss": "V_CaT_shared",
+    "ridge_regression": true,
     "columns_control": ["V", "CaT"],
     "columns_model":   ["V", "fluo"],
     "column_stim_protocol": "Ist",  # or delete this line, set to None by default
