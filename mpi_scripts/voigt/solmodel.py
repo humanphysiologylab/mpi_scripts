@@ -52,11 +52,13 @@ class SolModel(Solution):
                 self._y = np.nan
                 return
 
-            update_genes_from_state(genes=genes, state=self['state'],
-                                    config=self.config, exp_cond_name=exp_cond_name)
-
             self['phenotype'][exp_cond_name] = pred.copy()
             self['state'][exp_cond_name] = self['phenotype'][exp_cond_name].iloc[-1]
+
+            update_genes_from_state(genes=genes,
+                                    state=self['state'],
+                                    config=self.config,
+                                    exp_cond_name=exp_cond_name)
 
         self._x = genes.values
         self._y = calculate_loss(self, self.config)
