@@ -11,7 +11,7 @@
     "mutation_rate": 1.0,
     "gamma": 1.0,
     "loss": "V_CaT_shared",
-    "ridge_regression": true,
+    "ridge_regression": false,
     "columns_control": ["V", "CaT"],
     "columns_model":   ["V", "fluo"],
     "column_stim_protocol": "Ist",  # or delete this line, set to None by default
@@ -128,7 +128,7 @@
                     "is_multiplier": true
                 },
                 "gCab": {
-                    "bounds": [0.01, 3],
+                    "bounds": [0.01, 0.2],  # <- this guy likely overincrease Ca content
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
