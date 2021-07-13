@@ -82,8 +82,9 @@ def mpi_script(config_filename):
             pbar.set_postfix_str("CALC")
         for i, sol in enumerate(batch):
             sol.update()
-            if not sol.is_valid():
+            if not (sol.is_valid() and ga_optim._is_solution_inside_bounds(sol)):
                 sol._y = np.inf
+                del sol.data['phenotype']
         timer.end('calc')
 
         timer.start('gather')
@@ -102,6 +103,9 @@ def mpi_script(config_filename):
 
         if comm_rank == comm_rank_best:
             sol_best = batch[index_best_batch]
+            assert sol_best.is_updated()
+            assert sol_best.is_valid()
+            assert ga_optim._is_solution_inside_bounds(sol_best)
             save_sol_best(sol_best, config)
 
         if comm_rank == (comm_rank_best + 1) % comm_size:
