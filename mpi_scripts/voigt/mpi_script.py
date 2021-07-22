@@ -55,11 +55,13 @@ def mpi_script(config_filename):
     SolModel.model = model
     SolModel.config = config
 
+    rng = np.random.Generator(np.random.PCG64(config['runtime']['seed'] + comm_rank))
     ga_optim = GA(SolModel,
-                  config['runtime']['bounds'],
-                  config['runtime']['gammas'],
-                  config['runtime']['mask_multipliers'],
-                  keys_data_transmit=['state'])
+                  bounds=config['runtime']['bounds'],
+                  gammas=config['runtime']['gammas'],
+                  mask_log10_scale=config['runtime']['mask_multipliers'],
+                  keys_data_transmit=['state'],
+                  rng=rng)
 
     initial_population_filename = config.get('initial_population_filename', None)
     if initial_population_filename is not None:

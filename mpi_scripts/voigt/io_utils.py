@@ -81,6 +81,12 @@ def prepare_config(config_filename):
                                       mutation_rate=config.get('mutation_rate', 0.1),
                                       gamma=config.get('gamma', 1.0))
 
+    seed = config.get('seed', None)
+    if seed is None:
+        sq = np.random.SeedSequence()
+        seed = sq.entropy
+    config['runtime']['seed'] = seed
+
     return config
 
 
