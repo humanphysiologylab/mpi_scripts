@@ -22,6 +22,8 @@ from mpi_utils import allocate_recvbuf, allgather, population_from_recvbuf
 
 def mpi_script(config_filename):
 
+    logger = logging.getLogger(__name__)
+
     comm = MPI.COMM_WORLD
     comm_rank = comm.Get_rank()
     comm_size = comm.Get_size()
@@ -103,13 +105,16 @@ def mpi_script(config_filename):
 
         if comm_rank == comm_rank_best:
             sol_best = batch[index_best_batch]
-            assert sol_best.is_updated()
-            assert sol_best.is_valid()
-            assert ga_optim._is_solution_inside_bounds(sol_best)
+            msg = f"{comm_rank} has best solution:\n{sol_best}"
+            logger.info(msg)
             save_sol_best(sol_best, config)
 
+            assert sol_best.is_updated()
+            assert sol_best.is_valid()
+            assert ga_optim._is_solution_inside_bounds(sol_best), sol.x
+
         if comm_rank == (comm_rank_best + 1) % comm_size:
-            dump_epoch(recvbuf_dict, config)
+            pass  # dump_epoch(recvbuf_dict, config)
         timer.end('save')
 
         timer.start('gene')
@@ -169,6 +174,5 @@ if __name__ == '__main__':
     level = dict(INFO=logging.INFO,
                  DEBUG=logging.DEBUG).get(logging_level, logging.WARNING)
     logging.basicConfig(level=level)
-    logger = logging.getLogger(__name__)
 
     mpi_script(config_filename)

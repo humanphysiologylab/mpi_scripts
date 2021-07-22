@@ -127,36 +127,15 @@ def dump_epoch(recvbuf_dict, config):
     dump_dict(recvbuf_dict, config['runtime']['output']['folder_dump'])
 
 
-def save_sol_best(sol_best, config):
+def save_sol_best(sol_best, config, save_phenotype=0):
+
+    #  save_phenotype : 0, 1, 2
 
     output_dict = config['runtime']['output']
 
     genes = pd.Series(sol_best.x, index=config['runtime']['m_index'])
     filename = os.path.join(output_dict['folder'], 'sol_best.csv')
     genes.to_csv(filename)
-
-    for exp_cond_name in config['experimental_conditions']:
-        if exp_cond_name == 'common':
-            continue
-
-        folder_phenotype = config['runtime']['output']['folder_phenotype']
-        if not os.path.isdir(folder_phenotype):
-            os.mkdir(folder_phenotype)
-
-        df = sol_best['phenotype'][exp_cond_name]
-
-        # Rewrite last epoch
-        filename = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}.csv")
-        df.to_csv(filename, index=False)
-
-        # Append last epoch to previous
-        filename = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}")
-        if not os.path.isfile(filename):
-            with open(filename, "wb") as f:
-                pass
-
-        with open(filename, 'ba+') as f:
-            df.values.astype(np.float32).tofile(f)
 
     filename = os.path.join(output_dict['folder'], 'state_best.csv')
     sol_best['state'].to_csv(filename)
@@ -168,6 +147,38 @@ def save_sol_best(sol_best, config):
 
     folder_best = output_dict['folder_best']
     dump_dict(d, folder_best)
+
+    exp_cond_names = [exp_cond_name for exp_cond_name in config['experimental_conditions']
+                      if exp_cond_name != 'common']
+
+    state_best_0 = {exp_cond_name: sol_best['phenotype'][exp_cond_name].iloc[0]
+             for exp_cond_name in exp_cond_names}
+    state_best_0 = pd.concat(state_best_0, axis=1)
+    filename = os.path.join(output_dict['folder'], 'state_best_0.csv')
+    state_best_0.to_csv(filename)
+
+    if save_phenotype >= 1:
+        folder_phenotype = config['runtime']['output']['folder_phenotype']
+        if not os.path.isdir(folder_phenotype):
+            os.mkdir(folder_phenotype)
+
+        for exp_cond_name in exp_cond_names:
+
+            df = sol_best['phenotype'][exp_cond_name]
+
+            # Rewrite last epoch
+            filename = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}.csv")
+            df.to_csv(filename, index=False)
+
+            # Append last epoch to previous
+            if save_phenotype >= 2:
+                filename = os.path.join(folder_phenotype, f"phenotype_{exp_cond_name}")
+                if not os.path.isfile(filename):
+                    with open(filename, "wb") as f:
+                        pass
+
+                with open(filename, 'ba+') as f:
+                    df.values.astype(np.float32).tofile(f)
 
 
 def collect_results(case, dirname_results, dump_keys=None, voigt=False):
