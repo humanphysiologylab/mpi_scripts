@@ -1,6 +1,6 @@
 import numpy as np
 
-from pypoptim.helpers import calculate_mean_abs_noise, autoscaling
+from pypoptim.helpers import calculate_mean_abs_noise, calculate_autoscaling
 from pypoptim.losses import calculate_RMSE_balanced, RMSE, calculate_RMSE_weightened
 from model_utils import calculate_n_samples_per_stim
 
@@ -15,8 +15,8 @@ def calculate_composite_RMSE_V_CaT(x, y):
     cat_model = (cat_model - cat_model.min(axis=0)) / cat_model.ptp(axis=0)  # to balance V and CaT
 
     rmse_v = calculate_RMSE_balanced(v_model, v_exp)    # v_exp --> [0, 1]
-    cat_exp_scaled, coeffs = autoscaling(signal_to_scale=cat_exp,
-                                         signal_reference=cat_model)
+    cat_exp_scaled, coeffs = calculate_autoscaling(signal_to_scale=cat_exp,
+                                                   signal_reference=cat_model)
     rmse_cat = RMSE(cat_exp_scaled, cat_model)
     rmse_total = rmse_v + rmse_cat
 
@@ -48,8 +48,8 @@ def composite_RMSE_V_CaT_noisy(phenotype_model, phenotype_control):
 
     rmse_v = RMSE(phenotype_control[:, 0], phenotype_model[:, 0])
 
-    ca_exp_scaled, rmse_ca, coeffs = autoscaling(signal_to_scale=phenotype_control[:, 1],
-                                                 signal_reference=phenotype_model[:, 1])
+    ca_exp_scaled, rmse_ca, coeffs = calculate_autoscaling(signal_to_scale=phenotype_control[:, 1],
+                                                           signal_reference=phenotype_model[:, 1])
 
     return rmse_v * weights[0] + rmse_ca * weights[1]
 
@@ -106,8 +106,8 @@ def calculate_V_CaT_shared(sol, config):
     cat_model_concat = np.concatenate([x[:, 1] for x in phenotype_model_list])
     cat_control_concat = np.concatenate([x[:, 1] for x in phenotype_control_list])
 
-    cat_control_concat_scaled, (alpha, beta) = autoscaling(signal_to_scale=cat_control_concat,
-                                                           signal_reference=cat_model_concat)
+    cat_control_concat_scaled, (alpha, beta) = calculate_autoscaling(signal_to_scale=cat_control_concat,
+                                                                     signal_reference=cat_model_concat)
 
     if alpha <= 0:
         return np.inf
