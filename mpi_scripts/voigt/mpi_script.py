@@ -110,8 +110,8 @@ def mpi_script(config_filename):
             assert sol_best is min(batch)
             assert sol_best.is_all_equal(min(population))
 
-            # msg = f"{comm_rank} has best solution:\n{sol_best}"
-            # logger.info(msg)
+            msg = f"{comm_rank} has best solution:\n{sol_best}"
+            logger.debug(msg)
             save_sol_best(sol_best, config)
 
             assert sol_best.is_updated()
@@ -170,5 +170,6 @@ if __name__ == '__main__':
     level = dict(INFO=logging.INFO,
                  DEBUG=logging.DEBUG).get(logging_level, logging.WARNING)
     logging.basicConfig(level=level)
+    logging.getLogger('numba').setLevel(logging.CRITICAL)  # https://stackoverflow.com/a/63471108/13213091
 
     mpi_script(config_filename=config_filename)

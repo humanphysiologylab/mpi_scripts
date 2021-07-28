@@ -91,7 +91,7 @@ def calculate_loss_AP_CaT_restcurves(sol, exp_cond_name, config):
             loss_ap = calculate_loss_ap(ap_control, ap_model)
 
     loss = loss_cat * 10 + loss_ap  # 10 is a magic weight
-    logger.info(f'loss_cat = {loss_cat * 10}; loss_ap = {loss_ap}')
+    logger.debug(f'loss_cat = {loss_cat * 10}; loss_ap = {loss_ap}')
     return loss
 
 

@@ -68,11 +68,11 @@ class SolModel(Solution):
     def is_all_equal(self, other, keys_check=None):
         if not np.allclose(self.x, other.x):
             x = np.vstack([self.x, other.x, self.x - other.x]).T
-            logger.info(f"`x`s differs: {x}")
+            logger.debug(f"`x`s differs: {x}")
             return False
 
         if self.y != other.y:
-            logger.info(f"`y`s differs: {self.y} {other.y}")
+            logger.debug(f"`y`s differs: {self.y} {other.y}")
             return False
 
         if keys_check is None:
@@ -81,14 +81,14 @@ class SolModel(Solution):
             if key in self:
                 if key in other:
                     if not np.allclose(self[key], other[key]):
-                        logger.info(f"`{key}`s differs")
+                        logger.debug(f"`{key}`s differs")
                         return False
                 else:
-                    logger.info(f"`{key}` is not in `other`")
+                    logger.debug(f"`{key}` is not in `other`")
                     return False
             else:
                 if key in other:
-                    logger.info(f"`{key}` is not in `self`")
+                    logger.debug(f"`{key}` is not in `self`")
                     return False
 
         return True

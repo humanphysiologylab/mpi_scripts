@@ -194,6 +194,6 @@ def calculate_loss(sol, config):
             else:
                 raise ValueError(f'Unknown loss {config["loss"]}')
 
-    logger.info(f'loss = {loss}; loss_L2 = {loss_L2}')
+    logger.debug(f'loss = {loss}; loss_L2 = {loss_L2}')
 
     return loss
