@@ -8,6 +8,8 @@ from gene_utils import update_S_C_from_genes, \
 
 from loss_utils import calculate_loss
 
+import logging
+logger = logging.getLogger(__name__)
 
 class SolModel(Solution):
 
@@ -62,6 +64,34 @@ class SolModel(Solution):
 
         self._x = genes.values
         self._y = calculate_loss(self, self.config)
+
+    def is_all_equal(self, other, keys_check=None):
+        if not np.allclose(self.x, other.x):
+            x = np.vstack([self.x, other.x, self.x - other.x]).T
+            logger.info(f"`x`s differs: {x}")
+            return False
+
+        if self.y != other.y:
+            logger.info(f"`y`s differs: {self.y} {other.y}")
+            return False
+
+        if keys_check is None:
+            keys_check = ['state']
+        for key in keys_check:
+            if key in self:
+                if key in other:
+                    if not np.allclose(self[key], other[key]):
+                        logger.info(f"`{key}`s differs")
+                        return False
+                else:
+                    logger.info(f"`{key}` is not in `other`")
+                    return False
+            else:
+                if key in other:
+                    logger.info(f"`{key}` is not in `self`")
+                    return False
+
+        return True
 
     def is_valid(self):
         if not self.is_updated():

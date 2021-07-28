@@ -60,9 +60,9 @@ def population_from_recvbuf(recvbuf_dict, SolModel, config):
     for i in range(config['runtime']['n_organisms']):
         state = pd.DataFrame(recvbuf_state[i], columns=columns_state,
                              index=config['runtime']['legend']['states'].index)
-        sol = SolModel(recvbuf_genes[i], state=state)
-        sol._y = recvbuf_loss[i]
-        sol._status = recvbuf_status[i]
+        sol = SolModel(recvbuf_genes[i].copy(), state=state.copy())
+        sol._y = recvbuf_loss[i].copy()
+        sol._status = recvbuf_status[i].copy()
         population.append(sol)
 
     return population

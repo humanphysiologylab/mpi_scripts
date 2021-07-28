@@ -1,11 +1,12 @@
 {
+
     "seed": 42,
 
     "n_organisms": 4096,
     "n_elites": 128,
     "n_generations": 500,
 
-    "output_folder_name": "results/voigt/fluo/koivumaki/GGROUPINDEX/CCELLINDEX",
+    "output_folder_name": "results/test",
     # "initial_population_filename": "PATH/backup.pickle",
 
     # genetic algorithm
@@ -14,10 +15,8 @@
     "gamma": 1.0,
     "loss": "V_CaT_shared",
     "ridge_regression": false,
-    "columns_control": ["V", "CaT"],
+    "columns_control": ["V", "fluo"],
     "columns_model":   ["V", "fluo"],
-    "column_stim_protocol": "Ist",  # or delete this line, set to None by default
-    # "sparsed_protocol": true, # will search for 't' column in protocol csv files
 
     # model
     "filename_so": "src/model_ctypes/_koivumaki/koivumaki.so",
@@ -26,10 +25,9 @@
 
     # needed for ctypes
     "t_run": 9, # or "n_beats": 9
-    "t_sampling": 0.0001,
+    "t_sampling": 0.001,
     "tol": 1e-4,
     "stim_period_legend_name": "STIM_PERIOD",
-
 
     "experimental_conditions": {
         "common": {
@@ -39,6 +37,7 @@
                 "Na_o": 140,
                 "Ca_o": 2.0,
                 "K_o": 4,
+                "G_seal": 0,
 
                 "STIM_LEVEL": {
                     "bounds": [0.33, 1.33],
@@ -130,17 +129,12 @@
                     "is_multiplier": true
                 },
                 "gCab": {
-                    "bounds": [0.01, 0.2],  # <- this guy likely overincrease Ca content
+                    "bounds": [0.01, 3],
                     "gamma": 0.015,
                     "is_multiplier": true
                 },
                 "gKb": {
                     "bounds": [0.01, 3],
-                    "gamma": 0.015,
-                    "is_multiplier": true
-                },
-                "G_seal": {
-                    "bounds": [0.01, 10],
                     "gamma": 0.015,
                     "is_multiplier": true
                 }
@@ -150,15 +144,14 @@
         "CL_VALUE": {"params": {"STIM_PERIOD": "STIM_PERIOD_VALUE",
                           "Nai": {"bounds": [4, 16],
                                   "gamma": 0.03},
-                          "Ki": {"bounds": [100, 160],
+                          "Ki": {"bounds": [100, 180],
                                  "gamma": 0.15},
                           "CaSR": {"bounds": [0.06, 6],
                                    "gamma": 0.015}
 
                          },
-               "filename_phenotype": "data/voigt/10kHz/GGROUPINDEX/CCELLINDEX/phenotype_CL_PHENOTYPE.csv",
-               "filename_state": "data/koivumaki/fluo/states/state_CL_STATE.csv",
-               "filename_stim_protocol": "data/voigt/10kHz/GGROUPINDEX/CCELLINDEX/protocol_CL_PHENOTYPE.csv"
+               "filename_phenotype": "data/koivumaki/fluo_10uM_ghk/phenotypes/phenotype_CL_PHENOTYPE.csv",
+               "filename_state": "data/koivumaki/fluo_10uM_ghk/states/state_CL_STATE.csv"
         }
     }
 }
