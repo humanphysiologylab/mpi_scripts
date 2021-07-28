@@ -14,14 +14,12 @@ from solmodel import SolModel
 from pypoptim.algorythm.ga import GA
 
 from pypoptim.helpers import argmin
-from pypoptim import Timer
 
 from io_utils import prepare_config, update_output_dict, backup_config, dump_epoch, save_sol_best
 from mpi_utils import allocate_recvbuf, allgather, population_from_recvbuf
 
 
 def mpi_script(config_filename):
-
     logger = logging.getLogger(__name__)
 
     comm = MPI.COMM_WORLD
@@ -74,14 +72,11 @@ def mpi_script(config_filename):
     for sol in batch:
         sol['state'] = config['runtime']['states_initial']
 
-    timer = Timer()
-
     if comm_rank == 0:
         pbar = tqdm(total=config['n_generations'], ascii=True)
 
     for epoch in range(config['n_generations']):
 
-        timer.start('calc')
         if comm_rank == 0:
             pbar.set_postfix_str("CALC")
         for i, sol in enumerate(batch):
@@ -89,16 +84,12 @@ def mpi_script(config_filename):
             if not (sol.is_valid() and ga_optim._is_solution_inside_bounds(sol)):
                 sol._y = np.inf
                 del sol.data['phenotype']
-        timer.end('calc')
 
-        timer.start('gather')
         if comm_rank == 0:
             pbar.set_postfix_str("GATHER")
         allgather(batch, recvbuf_dict, comm)
         population = population_from_recvbuf(recvbuf_dict, SolModel, config)
-        timer.end('gather')
 
-        timer.start('save')
         if comm_rank == 0:
             pbar.set_postfix_str("SAVE")
         index_best = argmin(population)
@@ -113,13 +104,11 @@ def mpi_script(config_filename):
 
             assert sol_best.is_updated()
             assert sol_best.is_valid()
-            assert ga_optim._is_solution_inside_bounds(sol_best), sol.x
+            assert ga_optim._is_solution_inside_bounds(sol_best)
 
         if comm_rank == (comm_rank_best + 1) % comm_size:
-            pass  # dump_epoch(recvbuf_dict, config)
-        timer.end('save')
+            pass
 
-        timer.start('gene')
         if comm_rank == 0:
             pbar.set_postfix_str("GENE")
 
@@ -143,16 +132,9 @@ def mpi_script(config_filename):
 
         assert (len(batch) == config['runtime']['n_orgsnisms_per_process'])
 
-        timer.end('gene')
-
         if comm_rank == 0:
-            with open(os.path.join(config['runtime']['output']['folder'], 'runtime.log'), 'w') as f:
-                print(timer.report(), file=f)
-                print(f'# epoch: {epoch}', file=f)
             pbar.update(1)
             pbar.refresh()
-
-        timer.clear()
 
     if comm_rank == 0:
         pbar.set_postfix_str("DONE")
@@ -160,7 +142,6 @@ def mpi_script(config_filename):
 
 
 if __name__ == '__main__':
-
     parser = argparse.ArgumentParser()
     parser.add_argument('config',
                         type=str,
@@ -177,4 +158,4 @@ if __name__ == '__main__':
                  DEBUG=logging.DEBUG).get(logging_level, logging.WARNING)
     logging.basicConfig(level=level)
 
-    mpi_script(config_filename)
+    mpi_script(config_filename=config_filename)
