@@ -58,6 +58,10 @@ def mpi_script(config_filename):
     ga_optim = GA(SolModel,
                   bounds=config['runtime']['bounds'],
                   gammas=config['runtime']['gammas'],
+                  gamma_default=config['runtime']['kw_ga']['gamma'],
+                  mutation_rate=config['runtime']['kw_ga']['mutation_rate'],
+                  crossover_rate=config['runtime']['kw_ga']['crossover_rate'],
+                  selection_force=config['runtime']['kw_ga']['selection_force'],
                   mask_log10_scale=config['runtime']['mask_multipliers'],
                   keys_data_transmit=['state'],
                   rng=rng)

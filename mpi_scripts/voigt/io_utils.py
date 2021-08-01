@@ -78,7 +78,8 @@ def prepare_config(config_filename):
     config['runtime']['mask_multipliers'] = mask_multipliers
 
     config['runtime']['kw_ga'] = dict(crossover_rate=config.get('crossover_rate', 1.0),
-                                      mutation_rate=config.get('mutation_rate', 0.1),
+                                      mutation_rate=config.get('mutation_rate', 1.0),
+                                      selection_force=config.get('selection_force', 2),
                                       gamma=config.get('gamma', 1.0))
 
     seed = config.get('seed', None)
