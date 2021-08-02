@@ -2,8 +2,8 @@
 
     "seed": 42,
 
-    "n_organisms": 4096,
-    "n_elites": 128,
+    "n_organisms": 1024,
+    "n_elites": 32,
     "n_generations": 500,
 
     "output_folder_name": "results/test",
@@ -142,11 +142,11 @@
         },
 
         "CL_VALUE": {"params": {"STIM_PERIOD": "STIM_PERIOD_VALUE",
-                          "Nai": {"bounds": [4, 16],
+                          "Nai": {"bounds": [5, 25],
                                   "gamma": 0.03},
-                          "Ki": {"bounds": [100, 180],
+                          "Ki": {"bounds": [100, 300],
                                  "gamma": 0.15},
-                          "CaSR": {"bounds": [0.06, 6],
+                          "CaSR": {"bounds": [0.08, 8],
                                    "gamma": 0.015}
 
                          },
