@@ -5,21 +5,25 @@ from pypoptim.losses import calculate_RMSE_balanced, RMSE, calculate_RMSE_weight
 from model_utils import calculate_n_samples_per_stim
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
 def calculate_composite_RMSE_V_CaT(x, y):
     # x -- model, y -- experiment
-    assert (len(x) == len(y))
+    assert len(x) == len(y)
 
     v_model, cat_model = x.T
     v_exp, cat_exp = y.T
 
-    cat_model = (cat_model - cat_model.min(axis=0)) / cat_model.ptp(axis=0)  # to balance V and CaT
+    cat_model = (cat_model - cat_model.min(axis=0)) / cat_model.ptp(
+        axis=0
+    )  # to balance V and CaT
 
-    rmse_v = calculate_RMSE_balanced(v_model, v_exp)    # v_exp --> [0, 1]
-    cat_exp_scaled, coeffs = calculate_autoscaling(signal_to_scale=cat_exp,
-                                                   signal_reference=cat_model)
+    rmse_v = calculate_RMSE_balanced(v_model, v_exp)  # v_exp --> [0, 1]
+    cat_exp_scaled, coeffs = calculate_autoscaling(
+        signal_to_scale=cat_exp, signal_reference=cat_model
+    )
     rmse_cat = RMSE(cat_exp_scaled, cat_model)
     rmse_total = rmse_v + rmse_cat
 
@@ -31,8 +35,12 @@ def _calculate_RMSE_weightened(phenotype_model, phenotype_control):
     phenotype_model = phenotype_model.to_numpy()
     phenotype_control = phenotype_control.to_numpy()
 
-    phenotype_model = (phenotype_model - phenotype_control.min(axis=0)) / phenotype_control.ptp(axis=0)
-    phenotype_control = (phenotype_control - phenotype_control.min(axis=0)) / phenotype_control.ptp(axis=0)
+    phenotype_model = (
+        phenotype_model - phenotype_control.min(axis=0)
+    ) / phenotype_control.ptp(axis=0)
+    phenotype_control = (
+        phenotype_control - phenotype_control.min(axis=0)
+    ) / phenotype_control.ptp(axis=0)
 
     weights = 1 / calculate_mean_abs_noise(phenotype_control)
     weights /= sum(weights)
@@ -43,24 +51,29 @@ def composite_RMSE_V_CaT_noisy(phenotype_model, phenotype_control):
     phenotype_model = phenotype_model.to_numpy()
     phenotype_control = phenotype_control.to_numpy()
 
-    phenotype_model = (phenotype_model - phenotype_control.min(axis=0)) / phenotype_control.ptp(axis=0)
-    phenotype_control = (phenotype_control - phenotype_control.min(axis=0)) / phenotype_control.ptp(axis=0)
+    phenotype_model = (
+        phenotype_model - phenotype_control.min(axis=0)
+    ) / phenotype_control.ptp(axis=0)
+    phenotype_control = (
+        phenotype_control - phenotype_control.min(axis=0)
+    ) / phenotype_control.ptp(axis=0)
 
     weights = 1 / calculate_mean_abs_noise(phenotype_control)
     weights /= sum(weights)
 
     rmse_v = RMSE(phenotype_control[:, 0], phenotype_model[:, 0])
 
-    ca_exp_scaled, rmse_ca, coeffs = calculate_autoscaling(signal_to_scale=phenotype_control[:, 1],
-                                                           signal_reference=phenotype_model[:, 1])
+    ca_exp_scaled, rmse_ca, coeffs = calculate_autoscaling(
+        signal_to_scale=phenotype_control[:, 1], signal_reference=phenotype_model[:, 1]
+    )
 
     return rmse_v * weights[0] + rmse_ca * weights[1]
 
 
 def align_depolarization(phenotype_model, phenotype_control):
 
-    column_v_model = 'V' if 'V' in phenotype_model else 'v'
-    column_v_control = 'V' if 'V' in phenotype_control else 'v'
+    column_v_model = "V" if "V" in phenotype_model else "v"
+    column_v_control = "V" if "V" in phenotype_control else "v"
 
     v_model = phenotype_model[column_v_model].to_numpy()
     v_control = phenotype_control[column_v_control].to_numpy()
@@ -91,17 +104,21 @@ def calculate_V_CaT_shared(sol, config):
     phenotype_model_list = []
     phenotype_control_list = []
 
-    for exp_cond_name, exp_cond in config['experimental_conditions'].items():
+    for exp_cond_name, exp_cond in config["experimental_conditions"].items():
 
-        if exp_cond_name == 'common':
+        if exp_cond_name == "common":
             continue
 
         n_samples_per_stim = calculate_n_samples_per_stim(exp_cond_name, config)
 
-        phenotype_control = exp_cond['phenotype'][columns_control].copy()[-n_samples_per_stim - 1:]
-        phenotype_model = sol['phenotype'][exp_cond_name][columns_model].copy()[-n_samples_per_stim - 1:]
+        phenotype_control = exp_cond["phenotype"][columns_control].copy()[
+            -n_samples_per_stim - 1 :
+        ]
+        phenotype_model = sol["phenotype"][exp_cond_name][columns_model].copy()[
+            -n_samples_per_stim - 1 :
+        ]
 
-        phenotype_model = phenotype_model[:len(phenotype_control)]
+        phenotype_model = phenotype_model[: len(phenotype_control)]
 
         phenotype_model_list.append(phenotype_model.values)
         phenotype_control_list.append(phenotype_control.values)
@@ -109,8 +126,9 @@ def calculate_V_CaT_shared(sol, config):
     cat_model_concat = np.concatenate([x[:, 1] for x in phenotype_model_list])
     cat_control_concat = np.concatenate([x[:, 1] for x in phenotype_control_list])
 
-    cat_control_concat_scaled, (alpha, beta) = calculate_autoscaling(signal_to_scale=cat_control_concat,
-                                                                     signal_reference=cat_model_concat)
+    cat_control_concat_scaled, (alpha, beta) = calculate_autoscaling(
+        signal_to_scale=cat_control_concat, signal_reference=cat_model_concat
+    )
 
     if alpha <= 0:
         return np.inf
@@ -119,14 +137,20 @@ def calculate_V_CaT_shared(sol, config):
     loss = 0
 
     for i, x in enumerate(phenotype_control_list):
-        phenotype_control_list[i][:, 1] = cat_control_concat_scaled[cumlen: cumlen + len(x)]
+        phenotype_control_list[i][:, 1] = cat_control_concat_scaled[
+            cumlen : cumlen + len(x)
+        ]
         cumlen += len(x)
 
         phenotype_control = phenotype_control_list[i]
         phenotype_model = phenotype_model_list[i]
 
-        phenotype_control = (phenotype_control - phenotype_model.min(axis=0)) / phenotype_model.ptp(axis=0)
-        phenotype_model = (phenotype_model - phenotype_model.min(axis=0)) / phenotype_model.ptp(axis=0)
+        phenotype_control = (
+            phenotype_control - phenotype_model.min(axis=0)
+        ) / phenotype_model.ptp(axis=0)
+        phenotype_model = (
+            phenotype_model - phenotype_model.min(axis=0)
+        ) / phenotype_model.ptp(axis=0)
 
         weights = 1 / calculate_mean_abs_noise(phenotype_control)
         weights /= sum(weights)
@@ -151,49 +175,56 @@ def calculate_loss(sol, config):
     loss = 0
     loss_L2 = 0
 
-    if config.get('ridge_regression', False):
-        scalers = sol.x[config['runtime']['mask_multipliers']]
-        loss_L2 = np.sum((np.log10(scalers))**2) / 10
+    if config.get("ridge_regression", False):
+        scalers = sol.x[config["runtime"]["mask_multipliers"]]
+        loss_L2 = np.sum((np.log10(scalers)) ** 2) / 10
 
-    if config['loss'] == 'V_CaT_shared':
+    if config["loss"] == "V_CaT_shared":
         loss = calculate_V_CaT_shared(sol, config)
 
     else:
 
-        for exp_cond_name, exp_cond in config['experimental_conditions'].items():
+        for exp_cond_name, exp_cond in config["experimental_conditions"].items():
 
-            if exp_cond_name == 'common':
+            if exp_cond_name == "common":
                 continue
 
             n_samples_per_stim = calculate_n_samples_per_stim(exp_cond_name, config)
 
-            phenotype_control = exp_cond['phenotype'][columns_control][-n_samples_per_stim - 1:]
-            phenotype_model   = sol['phenotype'][exp_cond_name][columns_model][-n_samples_per_stim - 1:]
+            phenotype_control = exp_cond["phenotype"][columns_control][
+                -n_samples_per_stim - 1 :
+            ]
+            phenotype_model = sol["phenotype"][exp_cond_name][columns_model][
+                -n_samples_per_stim - 1 :
+            ]
 
-            phenotype_model   = phenotype_model[:len(phenotype_control)]
+            phenotype_model = phenotype_model[: len(phenotype_control)]
 
-            if config.get('align_depolarization', False):
-                phenotype_control = align_depolarization(phenotype_model, phenotype_control)
+            if config.get("align_depolarization", False):
+                phenotype_control = align_depolarization(
+                    phenotype_model, phenotype_control
+                )
 
-            if config['loss'] == 'RMSE':
+            if config["loss"] == "RMSE":
                 loss += RMSE(phenotype_control, phenotype_model)
 
-            elif config['loss'] == 'RMSE_balanced':
+            elif config["loss"] == "RMSE_balanced":
                 loss += calculate_RMSE_balanced(phenotype_control, phenotype_model)
 
-            elif config['loss'] == 'RMSE_weightened':
+            elif config["loss"] == "RMSE_weightened":
                 loss += _calculate_RMSE_weightened(phenotype_control, phenotype_model)
 
-            elif config['loss'] == 'composite_RMSE_V_CaT':
-                loss += calculate_composite_RMSE_V_CaT(phenotype_control.to_numpy(),
-                                                       phenotype_model.to_numpy())
+            elif config["loss"] == "composite_RMSE_V_CaT":
+                loss += calculate_composite_RMSE_V_CaT(
+                    phenotype_control.to_numpy(), phenotype_model.to_numpy()
+                )
 
-            elif config['loss'] == 'composite_RMSE_V_CaT_noisy':
+            elif config["loss"] == "composite_RMSE_V_CaT_noisy":
                 loss += composite_RMSE_V_CaT_noisy(phenotype_model, phenotype_control)
 
             else:
                 raise ValueError(f'Unknown loss {config["loss"]}')
 
-    logger.debug(f'loss = {loss}; loss_L2 = {loss_L2}')
+    logger.debug(f"loss = {loss}; loss_L2 = {loss_L2}")
 
     return loss
