@@ -92,29 +92,32 @@ def mpi_script(config_filename):
         sol["state"] = config["runtime"]["states_initial"]
 
     # True Solution
-    import pandas as pd
+    if False:
+        import pandas as pd
 
-    filename_state_1000 = config["experimental_conditions"]["1000"]["filename_state"]
-    states_true = {
-        CL: pd.read_csv(filename_state_1000.replace("1000", CL), index_col=0).iloc[
-            :, -1
+        filename_state_1000 = config["experimental_conditions"]["1000"][
+            "filename_state"
         ]
-        for CL in config["experimental_conditions"]
-        if CL != "common"
-    }
-    states_true = pd.concat(states_true, axis=1)
-    sol_true_series = pd.Series(sol.x.copy(), index=config["runtime"]["m_index"])
-    sol_true_series.loc["common"] = 1.0
-    sol = SolModel(sol_true_series.copy(), state=states_true.copy())
-    from gene_utils import update_genes_from_state
+        states_true = {
+            CL: pd.read_csv(filename_state_1000.replace("1000", CL), index_col=0).iloc[
+                :, -1
+            ]
+            for CL in config["experimental_conditions"]
+            if CL != "common"
+        }
+        states_true = pd.concat(states_true, axis=1)
+        sol_true_series = pd.Series(sol.x.copy(), index=config["runtime"]["m_index"])
+        sol_true_series.loc["common"] = 1.0
+        sol = SolModel(sol_true_series.copy(), state=states_true.copy())
+        from gene_utils import update_genes_from_state
 
-    for CL in config["experimental_conditions"]:
-        if CL != "common":
-            update_genes_from_state(sol_true_series, sol["state"], config, CL)
-    sol = SolModel(sol_true_series.copy(), state=states_true.copy())
-    if comm_rank == 0:
-        batch[0] = sol
-    config["state_true"] = states_true
+        for CL in config["experimental_conditions"]:
+            if CL != "common":
+                update_genes_from_state(sol_true_series, sol["state"], config, CL)
+        sol = SolModel(sol_true_series.copy(), state=states_true.copy())
+        if comm_rank == 0:
+            batch[0] = sol
+        config["state_true"] = states_true
 
     if comm_rank == 0:
         pbar = tqdm(total=config["n_generations"], ascii=True)
