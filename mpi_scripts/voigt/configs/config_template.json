@@ -1,0 +1,76 @@
+{
+    "seed": 42,
+
+    "n_organisms": 1024,
+    "n_elites": 32,
+    "n_generations": 500,
+
+    "output_folder_name": "results/test",
+    # "initial_population_filename": "PATH/backup.pickle",
+
+    # genetic algorithm "crossover_rate": 1.0,
+    "mutation_rate": 1.0,
+    "gamma": 0.015,  # <- !
+    "loss": "V_CaT_shared",
+    "ridge_regression": false,
+    "columns_control": ["V", "fluo"],
+    "columns_model": ["V", "fluo"],
+
+    # model "filename_so": "src/model_ctypes/_koivumaki/koivumaki.so",
+    "filename_legend_states": "src/model_ctypes/_koivumaki/legend_states.csv",
+    "filename_legend_constants": "src/model_ctypes/_koivumaki/legend_constants.csv",
+
+    # needed
+    for ctypes "t_run": 9,
+    # or "n_beats": 9 "t_sampling": 0.001,
+    "tol": 1e-4,
+    "stim_period_legend_name": "STIM_PERIOD",
+
+    "experimental_conditions": {
+        "common": {
+            "params": {
+
+                # "Mg_i": 1.0,
+                # vanessa "Na_o": 140,
+                "Ca_o": 2.0,
+                "K_o": 4,
+                "G_seal": 0,
+
+                "STIM_LEVEL": {
+                    "bounds": [0.33, 1.33],
+                    "is_multiplier": true
+                },
+
+                "PNa": {
+                    "bounds": [0.1, 10],
+                    "gamma_multiplier": 0.5,  # <- !
+                    "is_multiplier": true
+                },
+                "gCaL": {
+                    "bounds": [0.1, 10],
+                    "gamma_multiplier": 0.8,  # <- !
+                    "is_multiplier": true
+                }
+            }
+        },
+
+        "CL_VALUE": {
+            "params": {
+                "STIM_PERIOD": "STIM_PERIOD_VALUE",
+                "Nai": {
+                    "bounds": [5, 25],
+                    "gamma_multiplier": 2  # <- !
+                },
+                "Ki": {
+                    "bounds": [100, 300]
+                },
+                "CaSR": {
+                    "bounds": [0.08, 8]
+                }
+
+            },
+            "filename_phenotype": "data/koivumaki/fluo_10uM_ghk/phenotypes/phenotype_CL_PHENOTYPE.csv",
+            "filename_state": "data/koivumaki/fluo_10uM_ghk/states/state_CL_STATE.csv"
+        }
+    }
+}
