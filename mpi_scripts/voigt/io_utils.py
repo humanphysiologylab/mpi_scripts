@@ -12,6 +12,12 @@ from gene_utils import (
     generate_bounds_gammas_mask_multipliers,
 )
 
+import pypoptim
+
+
+def get_repo_sha(path=None):
+    return git.Repo(path, search_parent_directories=True).head.commit.hexsha
+
 
 def prepare_config(config_filename):
 
@@ -29,9 +35,10 @@ def prepare_config(config_filename):
         os.path.join(config_path, config["filename_so"])
     )
 
-    config["runtime"]["sha"] = git.Repo(
-        search_parent_directories=True
-    ).head.commit.hexsha
+    config["runtime"]["sha"] = get_repo_sha()
+
+    config["runtime"]["sha_pypoptim"] = get_repo_sha(pypoptim.__file__)
+    config["runtime"]["sha_model_ctypes"] = get_repo_sha(config["filename_so"])
 
     config["runtime"]["genes_dict"] = create_genes_dict_from_config(config)
     config["runtime"]["constants_dict"] = create_constants_dict_from_config(config)
@@ -51,16 +58,12 @@ def prepare_config(config_filename):
         os.path.join(config_path, config["filename_legend_states"]),
         usecols=["name", "value"],
         index_col="name",
-    )[
-        "value"
-    ]  # Series
+    )["value"]
     legend["constants"] = pd.read_csv(
         os.path.join(config_path, config["filename_legend_constants"]),
         usecols=["name", "value"],
         index_col="name",
-    )[
-        "value"
-    ]  # Series
+    )["value"]
     config["runtime"]["legend"] = legend
 
     for exp_cond_name, exp_cond in config["experimental_conditions"].items():
@@ -85,9 +88,7 @@ def prepare_config(config_filename):
             filename_stim_protocol = os.path.normpath(
                 os.path.join(config_path, exp_cond["filename_stim_protocol"])
             )
-            exp_cond["stim_protocol"] = pd.read_csv(
-                filename_stim_protocol
-            )
+            exp_cond["stim_protocol"] = pd.read_csv(filename_stim_protocol)
             exp_cond["filename_stim_protocol"] = filename_stim_protocol
         else:
             exp_cond["stim_protocol"] = None
@@ -302,12 +303,12 @@ def collect_results(case, dirname_results, dump_keys=None, voigt=False):
     return results
 
 
-def strip_comments(code, comment_char='#'):
+def strip_comments(code, comment_char="#"):
     lines = []
-    for i, line in enumerate(code.split('\n')):
+    for i, line in enumerate(code.split("\n")):
         items = line.split(comment_char)
         if len(items) >= 2:
             line = items[0]
         lines.append(line)
-    code = '\n'.join(lines)
+    code = "\n".join(lines)
     return code

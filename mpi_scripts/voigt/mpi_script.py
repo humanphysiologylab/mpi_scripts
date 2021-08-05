@@ -37,7 +37,10 @@ def mpi_script(config_filename):
         config = prepare_config(config_filename)
         config["runtime"]["comm_size"] = comm_size
 
-        print(f"# commit: {config['runtime']['sha']}")
+        print(f"# commit.sha: {config['runtime']['sha']}")
+        print(f"# commit.sha pypoptim: {config['runtime']['sha_pypoptim']}")
+        print(f"# commit.sha model_ctypes: {config['runtime']['sha_model_ctypes']}")
+
         print(f"# size: {comm_size}")
         print(f"# seed: {config['runtime']['seed']}")
 
