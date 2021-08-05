@@ -15,10 +15,6 @@ from gene_utils import (
 import pypoptim
 
 
-def get_repo_sha(path=None):
-    return git.Repo(path, search_parent_directories=True).head.commit.hexsha
-
-
 def prepare_config(config_filename):
 
     config_path = os.path.dirname(os.path.realpath(config_filename))
@@ -35,10 +31,16 @@ def prepare_config(config_filename):
         os.path.join(config_path, config["filename_so"])
     )
 
-    config["runtime"]["sha"] = get_repo_sha()
+    paths = None, pypoptim.__file__, config["filename_so"]
+    names = "mpi_scripts", "pypoptim", "model_ctypes"
 
-    config["runtime"]["sha_pypoptim"] = get_repo_sha(pypoptim.__file__)
-    config["runtime"]["sha_model_ctypes"] = get_repo_sha(config["filename_so"])
+    config["runtime"]["VCS"] = {}
+
+    for path, name in zip(paths, names):
+        repo = git.Repo(path, search_parent_directories=True)
+        branch = repo.active_branch.name
+        commit = repo.head.commit.hexsha[:6]
+        config["runtime"]["VCS"][name] = {"branch": branch, "commit": commit}
 
     config["runtime"]["genes_dict"] = create_genes_dict_from_config(config)
     config["runtime"]["constants_dict"] = create_constants_dict_from_config(config)
