@@ -38,7 +38,10 @@ def prepare_config(config_filename):
 
     for path, name in zip(paths, names):
         repo = git.Repo(path, search_parent_directories=True)
-        branch = repo.active_branch.name
+        try:
+            branch = repo.active_branch.name
+        except Exception as e:
+            branch = "no branch"
         commit = repo.head.commit.hexsha[:6]
         config["runtime"]["VCS"][name] = {"branch": branch, "commit": commit}
 
