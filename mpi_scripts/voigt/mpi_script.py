@@ -89,7 +89,7 @@ def mpi_script(config_filename):
 
     batch = ga_optim.generate_population(config["runtime"]["n_orgsnisms_per_process"])
     for sol in batch:
-        sol["state"] = config["runtime"]["states_initial"]
+        sol["state"] = config["runtime"]["states_initial"].copy()
 
     # True Solution
     if False:
