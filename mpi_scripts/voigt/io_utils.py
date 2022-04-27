@@ -31,18 +31,20 @@ def prepare_config(config_filename):
         os.path.join(config_path, config["filename_so"])
     )
 
-    paths = None, pypoptim.__file__, config["filename_so"]
-    names = "mpi_scripts", "pypoptim", "model_ctypes"
+    paths = None, config["filename_so"], pypoptim.__file__, 
+    names = "mpi_scripts", "model_ctypes", "pypoptim"
 
     config["runtime"]["VCS"] = {}
 
     for path, name in zip(paths, names):
-        repo = git.Repo(path, search_parent_directories=True)
+        branch = "unknown"
+        commit = "unknown"
         try:
+            repo = git.Repo(path, search_parent_directories=True)
             branch = repo.active_branch.name
+            commit = repo.head.commit.hexsha[:6]
         except Exception as e:
-            branch = "no branch"
-        commit = repo.head.commit.hexsha[:6]
+            pass
         config["runtime"]["VCS"][name] = {"branch": branch, "commit": commit}
 
     config["runtime"]["genes_dict"] = create_genes_dict_from_config(config)

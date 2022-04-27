@@ -91,34 +91,6 @@ def mpi_script(config_filename):
     for sol in batch:
         sol["state"] = config["runtime"]["states_initial"].copy()
 
-    # True Solution
-    if False:
-        import pandas as pd
-
-        filename_state_1000 = config["experimental_conditions"]["1000"][
-            "filename_state"
-        ]
-        states_true = {
-            CL: pd.read_csv(filename_state_1000.replace("1000", CL), index_col=0).iloc[
-                :, -1
-            ]
-            for CL in config["experimental_conditions"]
-            if CL != "common"
-        }
-        states_true = pd.concat(states_true, axis=1)
-        sol_true_series = pd.Series(sol.x.copy(), index=config["runtime"]["m_index"])
-        sol_true_series.loc["common"] = 1.0
-        sol = SolModel(sol_true_series.copy(), state=states_true.copy())
-        from gene_utils import update_genes_from_state
-
-        for CL in config["experimental_conditions"]:
-            if CL != "common":
-                update_genes_from_state(sol_true_series, sol["state"], config, CL)
-        sol = SolModel(sol_true_series.copy(), state=states_true.copy())
-        if comm_rank == 0:
-            batch[0] = sol
-        config["state_true"] = states_true
-
     if comm_rank == 0:
         pbar = tqdm(total=config["n_generations"], ascii=True)
 
@@ -183,9 +155,9 @@ def mpi_script(config_filename):
                 msg = f"# Not enough organisms for genetic operations left: {len(population)}"
                 raise RuntimeError(msg)
 
-        elites_all = population[
-            : config["n_elites"]
-        ]  # len may be less than config['n_elites'] due to invalids
+        elites_all = population[: config["n_elites"]]
+        # len may be less than config['n_elites'] due to invalids
+        
         elites_batch = elites_all[comm_rank::comm_size]  # elites_batch may be empty
         n_elites = len(elites_batch)
         n_mutants = config["runtime"]["n_orgsnisms_per_process"] - n_elites
